@@ -1,0 +1,86 @@
+from dataclasses import dataclass, field
+import json
+from typing import List
+import numpy as np
+import cv2 
+import os
+import multiprocessing as mp
+
+@dataclass
+class NeRFFrame:
+    transform_matrix:  List = field(default_factory=lambda: [])
+    rgb: np.array = np.array([])
+    depth: np.array = np.array([])
+
+
+@dataclass
+class NeRFDataset:
+    fl_x : float = 703.3542416031569
+    fl_y : float = 703.3542416031569
+    cx : float = 256
+    cy : float = 256
+    h: int = 0
+    w: int = 0
+    aabb: List[None] = field(default_factory=list)
+    integer_depth_scale : float = 0.0
+    frames: List[None] = field(default_factory=list)
+    folder: str = "test"
+    ros: bool = False
+
+    def __post_init__(self):
+        self.n_frames = 0
+        os.makedirs(self.folder, exist_ok=True)
+
+
+    def add_frame(self, frame: NeRFFrame):
+        frame_json = {}
+        frame_json["transform_matrix"] = frame.transform_matrix.tolist()
+
+        # Save rgb img
+        rgb_filename = f"{self.folder}/rgb_{self.n_frames:04d}.png"
+        if self.ros:
+            cv2.imwrite(rgb_filename, cv2.cvtColor(
+                        np.uint8(frame.rgb), cv2.COLOR_BGRA2RGBA))
+        else:
+            cv2.imwrite(rgb_filename, frame.rgb)
+
+        # Save depth img
+        # First convert to uint16:
+        depth_uint16 = (frame.depth * 1/self.integer_depth_scale).astype(np.uint16) 
+        depth_filename = f"{self.folder}/depth_{self.n_frames:04d}.png"
+        cv2.imwrite(depth_filename, 
+                               depth_uint16, [cv2.CV_16UC1])
+
+        frame_json["file_path"] = rgb_filename
+        frame_json["depth_path"] = depth_filename
+
+
+
+        self.frames.append(frame_json)
+        self.n_frames += 1
+
+    def save(self, filename):
+
+        nerf_json = {}
+        nerf_json['fl_x'] = self.fl_x
+        nerf_json['fl_y'] = self.fl_y
+        nerf_json['cx'] = self.cx
+        nerf_json['cy'] = self.cy
+        nerf_json['h'] = self.h
+        nerf_json['w'] = self.w
+
+        if self.aabb is None:
+            nerf_json['aabb'] = self.aabb        
+        if self.integer_depth_scale != 0.0:
+            nerf_json['integer_depth_scale'] = self.integer_depth_scale
+        
+        nerf_json['frames'] = self.frames
+        with open(filename, 'w') as f:
+            json.dump(nerf_json, f, indent=4)
+        return
+
+
+
+
+
+
