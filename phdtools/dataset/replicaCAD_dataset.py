@@ -1,0 +1,154 @@
+from dataclasses import dataclass, field
+import json
+from typing import List
+import numpy as np
+import cv2 
+import os
+import multiprocessing as mp
+import spatialmath as sm
+import trimesh
+
+@dataclass
+class ReplicaFrame:
+    transform_matrix:  List = field(default_factory=lambda: [])
+    rgb: np.array = np.array([])
+    depth: np.array = np.array([])
+    noise_depth : np.array = np.array([])
+
+@dataclass
+class ReplicaDataset:
+    fl_x : float = 600
+    fl_y : float = 600
+    cx : float =  599.5
+    cy : float = 339.5
+    h: int = 680
+    w: int = 1200
+    aabb: List[None] = field(default_factory=list)
+    integer_depth_scale : float = 0.0
+    depth_scale : float = 0.0
+    frames: List[None] = field(default_factory=list)
+    folder: str = "test"
+    n_frames: int = 0
+    frames_index: List[int] = field(default_factory=list)    
+    gt_mesh_path : str = "test"
+
+    def __init__(self, config, parent_path = "", *args, **kwargs):
+        
+        self.fl_x = config["camera"]["fx"]
+        self.fl_y = config["camera"]["fy"]
+        self.cx = config["camera"]["cx"]
+        self.cy = config["camera"]["cy"]
+        self.h = config["camera"]["h"]
+        self.w = config["camera"]["w"]
+
+        self.gt_mesh_path = f"{parent_path}" + config["gt_sdf_dir"] + "mesh.obj"
+
+        self.gt_sdf_path = f"{parent_path}" + config["gt_sdf_dir"] + "/1cm/sdf.npy"
+        self.gt_sdf = np.load(self.gt_sdf_path)
+
+        self.gt_stage_sdf_path = f"{parent_path}" + config["gt_sdf_dir"] + "/1cm/stage_sdf.npy"
+        self.gt_stage_sdf = np.load(self.gt_stage_sdf_path)
+
+        self.frames_index = config["im_indices"]
+        self.folder = f"{parent_path}" + config["seq_dir"]
+
+        self.load_transforms()
+        self.get_frames()
+        # os.makedirs(self.folder, exist_ok=True)
+
+    def load_transforms(self, orb = False):
+        '''
+        Load camera poses from file
+        '''
+        if orb:
+            filename = f"{self.folder}orb_traj.txt" 
+        else:
+            filename = f"{self.folder}traj.txt"
+
+        bounds_filename = f"{self.folder}bounds.txt"
+        bounds = np.loadtxt(bounds_filename)
+
+        mesh = trimesh.load(self.gt_mesh_path)
+        
+        
+
+
+
+        self.aabb = np.zeros((2,3))
+
+
+        self.aabb[0,:] = mesh.vertices.min(axis = 0)
+        self.aabb[1,:] = mesh.vertices.max(axis = 0)
+
+        self.transforms  = np.loadtxt(filename).reshape(-1,4,4)
+        return
+
+
+
+    def get_frames(self):
+        self.frames = []
+        for i in self.frames_index:
+            frame = ReplicaFrame()
+            # frame.rgb = cv2.imread(f"{self.gt_mesh_path}/rgb_{i:04d}.png")
+            # frame.depth = cv2.imread(f"{self.gt_mesh_path}/depth_{i:04d}.png", cv2.IMREAD_ANYDEPTH)
+            # frame.noise_depth = cv2.imread(f"{self.gt_mesh_path}/noise_depth_{i:04d}.png", cv2.IMREAD_ANYDEPTH)
+            frame.transform_matrix = self.transforms[i,:,:]
+            self.frames.append(frame)
+    
+    
+    def get_trasforms(self, indexs):
+        return [np.array(self.transforms[i]) for i in indexs]
+
+    def get_transforms_cv2(self,indexs):
+        '''
+        Return the camera transforms in open cv standards
+        '''
+        transforms = self.get_trasforms(indexs)
+        transforms_cv2 = []
+        for transform in transforms:
+            transforms_cv2.append(transform)
+        return transforms_cv2
+
+    def get_camera_intrinsic(self):
+        return np.array([[self.fl_x, 0, self.cx],
+                         [0, self.fl_y, self.cy],
+                         [0, 0, 1]])
+
+    def save(self, filename):
+
+        nerf_json = {}
+        nerf_json['fl_x'] = self.fl_x
+        nerf_json['fl_y'] = self.fl_y
+        nerf_json['cx'] = self.cx
+        nerf_json['cy'] = self.cy
+        nerf_json['h'] = self.h
+        nerf_json['w'] = self.w
+
+        if self.aabb is None:
+            nerf_json['aabb'] = self.aabb        
+        if self.integer_depth_scale != 0.0:
+            nerf_json['integer_depth_scale'] = self.integer_depth_scale
+        
+        nerf_json['frames'] = self.frames
+        with open(filename, 'w') as f:
+            json.dump(nerf_json, f, indent=4)
+        return
+
+
+# Test
+if __name__ == "__main__":
+    import neo_sddf.dependencies.iSDF as iSDF
+    import inspect
+
+
+    parent_path = "/home/nmarticorena/Documents/papers/neo-sddf/neo_sddf/dependencies/iSDF/"
+    import json
+    with open(f"{parent_path}/results/iSDF/apt_3/0/config.json", 'r') as f:
+        config = json.load(f)
+
+    dataset = ReplicaDataset(config["dataset"], parent_path = parent_path)
+
+    dataset.save("test.json")
+
+
+
