@@ -5,6 +5,7 @@ import numpy as np
 import cv2 
 import os
 import multiprocessing as mp
+import spatialmath as sm
 
 @dataclass
 class NeRFFrame:
@@ -23,14 +24,33 @@ class NeRFDataset:
     w: int = 0
     aabb: List[None] = field(default_factory=list)
     integer_depth_scale : float = 0.0
+    depth_scale : float = 0.0
     frames: List[None] = field(default_factory=list)
     folder: str = "test"
     ros: bool = False
+    n_frames: int = 0
 
-    def __post_init__(self):
+    def __post_init__(self, *args, **kwargs):
         self.n_frames = 0
         os.makedirs(self.folder, exist_ok=True)
 
+    def get_trasforms(self, indexs):
+        return [np.array(self.frames[i]["transform_matrix"]) for i in indexs]
+
+    def get_transforms_cv2(self,indexs):
+        '''
+        Return the camera transforms in open cv standards
+        '''
+        transforms = self.get_trasforms(indexs)
+        transforms_cv2 = []
+        for transform in transforms:
+            transforms_cv2.append(transform @ sm.SE3.Rx(np.pi, unit='rad').A)
+        return transforms_cv2
+
+    def get_camera_intrinsic(self):
+        return np.array([[self.fl_x, 0, self.cx],
+                         [0, self.fl_y, self.cy],
+                         [0, 0, 1]])
 
     def add_frame(self, frame: NeRFFrame):
         frame_json = {}
