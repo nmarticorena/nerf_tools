@@ -29,10 +29,15 @@ class NeRFDataset:
     folder: str = "test"
     ros: bool = False
     n_frames: int = 0
+    gt_mesh_path : str = ""
+    frames_index : List[None] = field(default_factory=list)
 
     def __post_init__(self, *args, **kwargs):
         self.n_frames = 0
         os.makedirs(self.folder, exist_ok=True)
+
+    def set_frames_index(self, indexs):
+        self.frames_index = indexs
 
     def get_trasforms(self, indexs):
         return [np.array(self.frames[i]["transform_matrix"]) for i in indexs]

@@ -7,6 +7,7 @@ import os
 import multiprocessing as mp
 import spatialmath as sm
 import trimesh
+import torch
 
 @dataclass
 class ReplicaFrame:
@@ -76,11 +77,29 @@ class ReplicaDataset:
 
         self.aabb = np.zeros((2,3))
 
+        T_extent_to_scene, bounds_extends = \
+            trimesh.bounds.oriented_bounds(mesh)
+        self.scene_center = mesh.bounds.mean(axis = 0)
+
+        self.inv_bounds_transform = torch.from_numpy(
+            T_extent_to_scene).float().to('cuda')
+        self.bounds_transform_np = np.linalg.inv(T_extent_to_scene)
+        self.bounds_transform = torch.from_numpy(
+            self.bounds_transform_np).float().to('cuda')
+
 
         self.aabb[0,:] = mesh.vertices.min(axis = 0)
         self.aabb[1,:] = mesh.vertices.max(axis = 0)
 
         self.transforms  = np.loadtxt(filename).reshape(-1,4,4)
+
+        grid_range = [-1.0, 1.0]
+        range_dist = grid_range[1] - grid_range[0]
+        self.scene_scale_np = bounds_extends / (range_dist * 0.9)
+        self.scene_scale = torch.from_numpy(
+            self.scene_scale_np).float().to('cuda')
+        self.inv_scene_scale = 1. / self.scene_scale
+        
         return
 
 
