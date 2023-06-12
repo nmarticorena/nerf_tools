@@ -33,7 +33,7 @@ class ReplicaDataset:
     frames_index: List[int] = field(default_factory=list)    
     gt_mesh_path : str = "test"
 
-    def __init__(self, config, parent_path = "", *args, **kwargs):
+    def __init__(self, config, parent_path = "", load_gt= True, *args, **kwargs):
         
         self.fl_x = config["camera"]["fx"]
         self.fl_y = config["camera"]["fy"]
@@ -45,10 +45,14 @@ class ReplicaDataset:
         self.gt_mesh_path = f"{parent_path}" + config["gt_sdf_dir"] + "mesh.obj"
 
         self.gt_sdf_path = f"{parent_path}" + config["gt_sdf_dir"] + "/1cm/sdf.npy"
-        self.gt_sdf = np.load(self.gt_sdf_path)
+        
+        if load_gt:
+            self.gt_sdf = np.load(self.gt_sdf_path)
+        # self.gt_sdf = np.load(self.gt_sdf_path)
 
         self.gt_stage_sdf_path = f"{parent_path}" + config["gt_sdf_dir"] + "/1cm/stage_sdf.npy"
-        self.gt_stage_sdf = np.load(self.gt_stage_sdf_path)
+        if load_gt:
+            self.gt_stage_sdf = np.load(self.gt_stage_sdf_path)
 
         self.frames_index = config["im_indices"]
         self.folder = f"{parent_path}" + config["seq_dir"]
@@ -56,6 +60,31 @@ class ReplicaDataset:
         self.load_transforms()
         self.get_frames()
         # os.makedirs(self.folder, exist_ok=True)
+
+    def get_camera(self):
+        return open3d.camera.PinholeCameraIntrinsic(self.w, 
+                                             self.h, 
+                                             self.fl_x, 
+                                             self.fl_y,
+                                             self.cx, 
+                                             self.cy)
+
+    def sample_o3d(self, idx, depth_trunc=5.0):
+        '''
+        input idx: index of sample
+        '''
+        assert idx>=0 and idx<self.n_frames, \
+            f"sample index out of range [0,{self.n_frames}]"
+        
+        color = open3d.io.read_image(self.image_path[idx])
+        depth = open3d.io.read_image(self.depth_path[idx])
+        rgbd = open3d.geometry.RGBDImage.create_from_color_and_depth(
+            color, depth, depth_scale = 1.0/(self.depth_factor),
+            depth_trunc=depth_trunc, convert_rgb_to_intensity=False)
+
+        pose = self.get_transforms_cv2([idx])
+
+        return rgbd, pose
 
     def load_transforms(self, orb = False):
         '''
@@ -102,8 +131,6 @@ class ReplicaDataset:
         
         return
 
-
-
     def get_frames(self):
         self.frames = []
         for i in self.frames_index:
@@ -114,19 +141,15 @@ class ReplicaDataset:
             frame.transform_matrix = self.transforms[i,:,:]
             self.frames.append(frame)
     
-    
-    def get_trasforms(self, indexs):
+    def get_transforms(self, indexs):
         return [np.array(self.transforms[i]) for i in indexs]
 
     def get_transforms_cv2(self,indexs):
         '''
         Return the camera transforms in open cv standards
         '''
-        transforms = self.get_trasforms(indexs)
-        transforms_cv2 = []
-        for transform in transforms:
-            transforms_cv2.append(transform)
-        return transforms_cv2
+        return self.get_transforms(indexs)
+        
 
     def get_camera_intrinsic(self):
         return np.array([[self.fl_x, 0, self.cx],
