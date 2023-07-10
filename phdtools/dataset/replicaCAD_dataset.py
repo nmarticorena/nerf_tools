@@ -42,20 +42,20 @@ class ReplicaDataset:
         self.h = config["camera"]["h"]
         self.w = config["camera"]["w"]
 
-        self.gt_mesh_path = f"{parent_path}" + config["gt_sdf_dir"] + "mesh.obj"
+        self.gt_mesh_path = f"{parent_path}" + "/" + config["gt_sdf_dir"] + "mesh.obj"
 
-        self.gt_sdf_path = f"{parent_path}" + config["gt_sdf_dir"] + "/1cm/sdf.npy"
+        self.gt_sdf_path = f"{parent_path}"  + "/" + config["gt_sdf_dir"] + "/1cm/sdf.npy"
         
         if load_gt:
             self.gt_sdf = np.load(self.gt_sdf_path)
         # self.gt_sdf = np.load(self.gt_sdf_path)
 
-        self.gt_stage_sdf_path = f"{parent_path}" + config["gt_sdf_dir"] + "/1cm/stage_sdf.npy"
+        self.gt_stage_sdf_path = f"{parent_path}" + "/" + config["gt_sdf_dir"] + "/1cm/stage_sdf.npy"
         if load_gt:
             self.gt_stage_sdf = np.load(self.gt_stage_sdf_path)
 
         self.frames_index = config["im_indices"]
-        self.folder = f"{parent_path}" + config["seq_dir"]
+        self.folder = f"{parent_path}" + "/" + config["seq_dir"]
 
         self.load_transforms()
         self.get_frames()
@@ -86,6 +86,13 @@ class ReplicaDataset:
 
         return rgbd, pose
 
+    def get_projection_matrix(self):
+        return np.array([[1/self.fl_x, 0        , self.cx, 0],
+                         [0        , 1/self.fl_y, self.cy, 0],
+                         [0        , 0        , 1      , 0]])
+
+
+
     def load_transforms(self, orb = False):
         '''
         Load camera poses from file
@@ -98,7 +105,7 @@ class ReplicaDataset:
         bounds_filename = f"{self.folder}bounds.txt"
         bounds = np.loadtxt(bounds_filename)
 
-        mesh = trimesh.load(self.gt_mesh_path)
+        mesh = trimesh.exchange.load.load(self.gt_mesh_path, process=False)
         
         
 
@@ -106,15 +113,15 @@ class ReplicaDataset:
 
         self.aabb = np.zeros((2,3))
 
-        T_extent_to_scene, bounds_extends = \
-            trimesh.bounds.oriented_bounds(mesh)
+        self.inv_bounds_transform, bounds_extends = trimesh.bounds.oriented_bounds(mesh)
         self.scene_center = mesh.bounds.mean(axis = 0)
 
-        self.inv_bounds_transform = torch.from_numpy(
-            T_extent_to_scene).float().to('cuda')
-        self.bounds_transform_np = np.linalg.inv(T_extent_to_scene)
-        self.bounds_transform = torch.from_numpy(
-            self.bounds_transform_np).float().to('cuda')
+        # self.inv_bounds_transform = torch.from_numpy(
+        #     T_extent_to_scene).float().to('cuda')
+        self.bounds_transform_np = np.linalg.inv(self.inv_bounds_transform)
+        # self.bounds_transform = torch.from_numpy(
+        #     self.bounds_transform_np).float().to('cuda')
+
 
 
         self.aabb[0,:] = mesh.vertices.min(axis = 0)
@@ -122,12 +129,12 @@ class ReplicaDataset:
 
         self.transforms  = np.loadtxt(filename).reshape(-1,4,4)
 
-        grid_range = [-1.0, 1.0]
-        range_dist = grid_range[1] - grid_range[0]
-        self.scene_scale_np = bounds_extends / (range_dist * 0.9)
-        self.scene_scale = torch.from_numpy(
-            self.scene_scale_np).float().to('cuda')
-        self.inv_scene_scale = 1. / self.scene_scale
+        # grid_range = [-1.0, 1.0]
+        # range_dist = grid_range[1] - grid_range[0]
+        # self.scene_scale_np = bounds_extends / (range_dist * 0.9)
+        # self.scene_scale = torch.from_numpy(
+        #     self.scene_scale_np).float().to('cuda')
+        # self.inv_scene_scale = 1. / self.scene_scale
         
         return
 
@@ -144,10 +151,12 @@ class ReplicaDataset:
     def get_transforms(self, indexs):
         return [np.array(self.transforms[i]) for i in indexs]
 
-    def get_transforms_cv2(self,indexs):
+    def get_transforms_cv2(self,indexs=[]):
         '''
         Return the camera transforms in open cv standards
         '''
+        if indexs == []: # Get all the training frames
+            indexs = self.frames_index
         return self.get_transforms(indexs)
         
 
