@@ -6,6 +6,7 @@ import cv2
 import os
 import multiprocessing as mp
 import spatialmath as sm
+import open3d
 
 @dataclass
 class NeRFFrame:
@@ -29,6 +30,7 @@ class NeRFDataset:
     folder: str = "test"
     ros: bool = False
     n_frames: int = 0
+    n_views: int = 0
     gt_mesh_path : str = ""
     frames_index : List[None] = field(default_factory=list)
 
@@ -36,26 +38,69 @@ class NeRFDataset:
         self.n_frames = 0
         os.makedirs(self.folder, exist_ok=True)
 
+    def get_camera(self):
+        return open3d.camera.PinholeCameraIntrinsic(self.w, 
+                                             self.h, 
+                                             self.fl_x, 
+                                             self.fl_y,
+                                             self.cx, 
+                                             self.cy)
+
+    def sample_o3d(self, idx, depth_trunc=10.0):
+        '''
+        input idx: index of sample
+        '''
+        assert idx>=0 and idx<len(self.frames), \
+            f"sample index out of range [0,{len(self.frames)}]"
+        
+        color = cv2.imread(self.folder + '/' + self.frames[idx]['file_path'])
+
+        # Convert the image to a numpy array
+        # image_array = color.to_numpy_array()
+
+        # Convert RGB to BGR format using OpenCV
+        bgr_image_array = cv2.cvtColor(color, cv2.COLOR_RGB2BGR)
+
+        # Convert the BGR image array back to an Open3D image
+        color = open3d.geometry.Image(bgr_image_array)
+
+        depth = open3d.io.read_image(self.folder + '/' + self.frames[idx]['depth_path'])
+        rgbd = open3d.geometry.RGBDImage.create_from_color_and_depth(
+            color, depth, depth_scale = 1.0/(self.integer_depth_scale),
+            depth_trunc=depth_trunc, convert_rgb_to_intensity=False)
+
+        pose = self.get_transforms_cv2([idx])
+
+        return rgbd, pose[0]
+
     def set_frames_index(self, indexs):
         self.frames_index = indexs
 
-    def get_trasforms(self, indexs):
+    def get_transforms(self, indexs):
         return [np.array(self.frames[i]["transform_matrix"]) for i in indexs]
 
-    def get_transforms_cv2(self,indexs):
+
+    def get_transforms_cv2(self,indexs=[]):
         '''
         Return the camera transforms in open cv standards
         '''
-        transforms = self.get_trasforms(indexs)
+        if indexs == []:
+            indexs = range(len(self.frames))
+        transforms = self.get_transforms(indexs)
         transforms_cv2 = []
         for transform in transforms:
             transforms_cv2.append(transform @ sm.SE3.Rx(np.pi, unit='rad').A)
-        return transforms_cv2
+        return transforms_cv2 
 
     def get_camera_intrinsic(self):
         return np.array([[self.fl_x, 0, self.cx],
                          [0, self.fl_y, self.cy],
                          [0, 0, 1]])
+
+    def get_projection_matrix(self):
+        return np.array([[1/self.fl_x, 0        , self.cx, 0],
+                         [0        , 1/self.fl_y, self.cy, 0],
+                         [0        , 0        , 1      , 0]])
 
     def add_frame(self, frame: NeRFFrame):
         frame_json = {}
@@ -74,7 +119,7 @@ class NeRFDataset:
         depth_uint16 = (frame.depth * 1/self.integer_depth_scale).astype(np.uint16) 
         depth_filename = f"{self.folder}/depth_{self.n_frames:04d}.png"
         cv2.imwrite(depth_filename, 
-                               depth_uint16, [cv2.CV_16UC1])
+                               depth_uint16, [cv2.CV_16UC1, cv2.CV_16UC1])
 
         frame_json["file_path"] = rgb_filename
         frame_json["depth_path"] = depth_filename
