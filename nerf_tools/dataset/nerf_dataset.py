@@ -52,8 +52,11 @@ class NeRFDataset:
         '''
         assert idx>=0 and idx<len(self.frames), \
             f"sample index out of range [0,{len(self.frames)}]"
-        
-        color = cv2.imread(self.folder + '/' + self.frames[idx]['file_path'])
+        if "png" not in self.frames[idx]['file_path']:
+            img_path = self.frames[idx]['file_path'] + '.png' 
+        else:
+            img_path = self.frames[idx]['file_path']
+        color = cv2.imread(self.folder + '/' + img_path)
 
         # Convert the image to a numpy array
         # image_array = color.to_numpy_array()
@@ -89,7 +92,7 @@ class NeRFDataset:
         transforms = self.get_transforms(indexs)
         transforms_cv2 = []
         for transform in transforms:
-            transforms_cv2.append(transform @ sm.SE3.Rx(np.pi, unit='rad').A)
+            transforms_cv2.append(transform)# @ sm.SE3.Rx(np.pi, unit='rad').A)
         return transforms_cv2 
 
     def get_camera_intrinsic(self):
