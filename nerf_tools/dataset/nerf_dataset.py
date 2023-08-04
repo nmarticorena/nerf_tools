@@ -92,7 +92,7 @@ class NeRFDataset:
         transforms = self.get_transforms(indexs)
         transforms_cv2 = []
         for transform in transforms:
-            transforms_cv2.append(transform)# @ sm.SE3.Rx(np.pi, unit='rad').A)
+            transforms_cv2.append(transform @ sm.SE3.Rx(np.pi, unit='rad').A)
         return transforms_cv2 
 
     def get_camera_intrinsic(self):
