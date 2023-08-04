@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
 setup(
-    name='phdtools',
+    name='nerf_tools',
     packages=find_packages()
 )
