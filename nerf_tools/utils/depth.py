@@ -33,7 +33,7 @@ def get_tsdf(dataset: Union[NeRFDataset, ReplicaDataset]):
    
     camera = dataset.get_camera()
     for ix, frame in enumerate(dataset.frames):
-        rgbd, pose = dataset.sample_o3d(ix)
+        rgbd, pose = dataset.sample_o3d(ix, depth_trunc= 0.8)
 
         volume.integrate(
             rgbd,
