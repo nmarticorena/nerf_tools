@@ -4,13 +4,13 @@ from nerf_tools.dataset.nerf_dataset import NeRFDataset
 from nerf_tools.dataset.replicaCAD_dataset import ReplicaDataset
 from typing import Union
 
-def get_pointcloud(dataset: Union[NeRFDataset, ReplicaDataset]) \
+def get_pointcloud(dataset: Union[NeRFDataset, ReplicaDataset], max_depth = 10) \
     -> o3d.geometry.PointCloud:
 
     pcd_final = o3d.geometry.PointCloud()
     camera = dataset.get_camera()    
     for ix, frame in enumerate(dataset.frames):
-        rgbd, pose = dataset.sample_o3d(ix)
+        rgbd, pose = dataset.sample_o3d(ix, depth_trunc= max_depth)
 
         pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, camera)
 
