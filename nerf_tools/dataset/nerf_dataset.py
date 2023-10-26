@@ -152,7 +152,18 @@ class NeRFDataset:
             json.dump(nerf_json, f, indent=4)
         return
 
+def load_from_json(filepath: str) -> NeRFDataset:
+    """Create a NeRFDataset instance from a transform.json file.
 
+    Args:
+        filepath (str): Path to transform.json file.
+    Returns:
+        NeRFDataset: NeRFDataset instance.
+    """
+    with open(filepath, 'r') as f:
+        nerf_json = json.load(f)
+
+    return NeRFDataset(**nerf_json)
 
 
 
