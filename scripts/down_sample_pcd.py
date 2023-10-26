@@ -7,6 +7,7 @@ down sample algorithm of open3D
 import open3d as o3d
 import argparse
 import numpy as np
+import yaml
 
 argparser = argparse.ArgumentParser()
 argparser.add_argument('--folder', help = "folder with the point cloud to resample")
@@ -19,8 +20,16 @@ args = argparser.parse_args()
 
 
 folder = args.folder
+
+config_path = folder + "config.yaml"
+with open(config_path, "r") as f:
+    config = yaml.load(f, Loader = yaml.FullLoader)
+
+print(config)
+
+
 if args.all:
-    for i in range(1,100):
+    for i in range(1,config["samples"]+1):
         path = folder + f"scene_pcd{i:04d}.pcd"
         pcd = o3d.io.read_point_cloud(path)
 
@@ -45,4 +54,7 @@ else:
 
     o3d.visualization.draw_geometries([downpcd])
 
-    filename = folder + f"scene_down_pcd{args.i:04d}.pcd"
+    out_filename = folder + f"scene_down_pcd{args.i:04d}.pcd"
+
+
+    o3d.io.write_point_cloud(out_filename, downpcd)
