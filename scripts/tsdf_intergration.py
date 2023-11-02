@@ -12,14 +12,16 @@ import json
 import argparse
 from nerf_tools.utils.depth import get_tsdf
 
+from dataclasses import dataclass
+import tyro
 
-parser = argparse.ArgumentParser(description='Check dataset')
-parser.add_argument('--dataset', type=str, default='nerf', help='dataset to use')
-parser.add_argument('--dataset_path', type=str, 
-                      default='/home/nmarticorena/Documents/tools/RLBench/', 
-                      help='path to the dataset')
 
-args = parser.parse_args()
+@dataclass
+class Args:
+    dataset: str = "nerf" # Dataset to use
+    dataset_path: str = '/home/nmarticorena/Documents/tools/RLBench/'  # Path to the dataset 
+args = tyro.cli(Args)
+
 
 if args.dataset == 'nerf':
     from nerf_tools.dataset.nerf_dataset import NeRFDataset as Dataset
@@ -34,8 +36,9 @@ if args.dataset == 'nerf':
 else:
     from nerf_tools.dataset.replicaCAD_dataset import ReplicaDataset as Dataset
 
+cameras = oDataset.draw_cameras()
 
-o3d.visualization.draw_geometries([get_tsdf(oDataset)])
+o3d.visualization.draw_geometries([get_tsdf(oDataset), *cameras])
 
 
 

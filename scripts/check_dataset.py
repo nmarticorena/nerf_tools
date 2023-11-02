@@ -22,19 +22,18 @@ args = parser.parse_args()
 
 if args.dataset == 'nerf':
     from nerf_tools.dataset.nerf_dataset import NeRFDataset as Dataset
+    from nerf_tools.dataset.nerf_dataset import load_from_json
+    if ".json" not in args.dataset_path:
+        args.dataset_path = os.path.join(args.dataset_path, 'transforms.json')
 
-    with open(os.path.join(args.dataset_path, 'transforms.json')) as f:
-        config = json.load(f)
-
-    config['folder'] = args.dataset_path
-    oDataset = Dataset(**config)
+    oDataset = load_from_json(args.dataset_path) 
     camera_index = range(0, len(oDataset.frames))
     oDataset.set_frames_index(camera_index)
 else:
     from nerf_tools.dataset.replicaCAD_dataset import ReplicaDataset as Dataset
 
 
-o3d.visualization.draw_geometries([get_pointcloud(oDataset)])
+o3d.visualization.draw_geometries([get_pointcloud(oDataset, skip_frames= 10)])
 
 
 

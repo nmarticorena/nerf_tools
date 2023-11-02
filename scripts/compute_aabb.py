@@ -19,8 +19,6 @@ from nerf_tools.utils.depth import get_pointcloud
 class Args:
     dataset: str = "nerf" # Dataset to use
     dataset_path: str = '/home/nmarticorena/Documents/tools/RLBench/'  # Path to the dataset 
-
-
 args = tyro.cli(Args)
 
 if args.dataset == 'nerf':
@@ -36,7 +34,7 @@ if args.dataset == 'nerf':
 else:
     from nerf_tools.dataset.replicaCAD_dataset import ReplicaDataset as Dataset
 
-pcd = get_pointcloud(oDataset, 2.0)
+pcd = get_pointcloud(oDataset, 2.0, 3)
 
 aabb = pcd.get_axis_aligned_bounding_box()
 aabb.color = (1,0,0)
