@@ -7,6 +7,7 @@ import os
 import multiprocessing as mp
 import spatialmath as sm
 import open3d
+from nerf_tools.utils.utils import * 
 
 @dataclass
 class NeRFFrame:
@@ -39,12 +40,22 @@ class NeRFDataset:
         os.makedirs(self.folder, exist_ok=True)
 
     def get_camera(self):
-        return open3d.camera.PinholeCameraIntrinsic(self.w, 
-                                             self.h, 
+        return open3d.camera.PinholeCameraIntrinsic(int(self.w), 
+                                             int(self.h), 
                                              self.fl_x, 
                                              self.fl_y,
                                              self.cx, 
                                              self.cy)
+
+    def draw_cameras(self):
+        intrinsic = self.get_camera()
+        extrinsic = self.get_transforms_cv2()
+        Lines = []
+        for W_TC in extrinsic:
+            Lines.append(o3d.geometry.LineSet.create_camera_visualization(intrinsic,
+                                                                          np.linalg.inv(W_TC), 
+                                                                          scale = 0.1))
+        return Lines
 
     def sample_o3d(self, idx, depth_trunc=10.0):
         '''
@@ -163,7 +174,11 @@ def load_from_json(filepath: str) -> NeRFDataset:
     with open(filepath, 'r') as f:
         nerf_json = json.load(f)
 
-    return NeRFDataset(**nerf_json)
+    expected_keys = set(NeRFDataset.__annotations__.keys())
+    filtered_data_dict = {k: v for k, v in nerf_json.items() if k in expected_keys}
+   
+
+    return NeRFDataset(**filtered_data_dict)
 
 
 
