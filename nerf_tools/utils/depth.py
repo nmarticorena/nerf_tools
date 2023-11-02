@@ -4,24 +4,26 @@ from nerf_tools.dataset.nerf_dataset import NeRFDataset
 from nerf_tools.dataset.replicaCAD_dataset import ReplicaDataset
 from typing import Union
 
-def get_pointcloud(dataset: Union[NeRFDataset, ReplicaDataset], max_depth = 10) \
+def get_pointcloud(dataset: Union[NeRFDataset, ReplicaDataset], max_depth = 10, skip_frames = 1) \
     -> o3d.geometry.PointCloud:
 
     pcd_final = o3d.geometry.PointCloud()
     camera = dataset.get_camera()    
     for ix, frame in enumerate(dataset.frames):
-        rgbd, pose = dataset.sample_o3d(ix, depth_trunc= max_depth)
+        if ix % skip_frames == 0:
 
-        pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, camera)
+            rgbd, pose = dataset.sample_o3d(ix, depth_trunc= max_depth)
 
-        pcd.transform(pose)
+            pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, camera)
 
-        pcd_final.points = o3d.utility.Vector3dVector(
-            np.concatenate([np.asarray(pcd_final.points),np.asarray(pcd.points)],
-            axis=0))
-        pcd_final.colors = o3d.utility.Vector3dVector(
-            np.concatenate([np.asarray(pcd_final.colors),np.asarray(pcd.colors)],
-            axis=0))
+            pcd.transform(pose)
+
+            pcd_final.points = o3d.utility.Vector3dVector(
+                np.concatenate([np.asarray(pcd_final.points),np.asarray(pcd.points)],
+                axis=0))
+            pcd_final.colors = o3d.utility.Vector3dVector(
+                np.concatenate([np.asarray(pcd_final.colors),np.asarray(pcd.colors)],
+                axis=0))
 
     return pcd_final
 
