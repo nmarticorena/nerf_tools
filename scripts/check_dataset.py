@@ -18,8 +18,10 @@ parser.add_argument('--dataset_path', type=str,
                       default='/home/nmarticorena/Documents/tools/RLBench/', 
                       help='path to the dataset')
 
-args = parser.parse_args()
 
+
+args = parser.parse_args()
+# args.dataset_path = "/media/nmarticorena/DATA/nerf_standard/tunnel_sdf/transforms.json"
 if args.dataset == 'nerf':
     from nerf_tools.dataset.nerf_dataset import NeRFDataset as Dataset
     from nerf_tools.dataset.nerf_dataset import load_from_json
@@ -33,7 +35,7 @@ else:
     from nerf_tools.dataset.replicaCAD_dataset import ReplicaDataset as Dataset
 
 
-o3d.visualization.draw_geometries([get_pointcloud(oDataset, skip_frames= 10)])
+o3d.visualization.draw_geometries([get_pointcloud(oDataset, skip_frames= 4, max_depth= 2.0)])
 
 
 

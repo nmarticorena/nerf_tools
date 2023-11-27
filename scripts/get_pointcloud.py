@@ -23,34 +23,24 @@ class Args:
 
 
 args = tyro.cli(Args)
+args.dataset_path = "/media/nmarticorena/DATA/datasets/NeRFCapture/cupboard2"
 if args.dataset == 'nerf':
     from nerf_tools.dataset.nerf_dataset import NeRFDataset as Dataset
     from nerf_tools.dataset.nerf_dataset import load_from_json
     if ".json" not in args.dataset_path:
-        args.dataset_path = os.path.join(args.dataset_path, 'transforms.json')
-    with open(args.dataset_path, "r") as f:
-        config = json.load(f)
-    oDataset = load_from_json(args.dataset_path)
+        json_path = os.path.join(args.dataset_path, 'transforms.json')
+    else:
+        json_path = args.dataset_path
+    oDataset = load_from_json(json_path)
     camera_index = range(0, len(oDataset.frames))
     oDataset.set_frames_index(camera_index)
 else:
     from nerf_tools.dataset.replicaCAD_dataset import ReplicaDataset as Dataset
 
-pcd = get_pointcloud(oDataset, 2.0, 3)
+pcd = get_pointcloud(oDataset, 2.0, 1)
 
 aabb = pcd.get_axis_aligned_bounding_box()
 aabb.color = (1,0,0)
 
-
+o3d.io.write_point_cloud(os.path.join(args.dataset_path, "pcd.ply"), pcd)
 o3d.visualization.draw_geometries([pcd, aabb])
-
-aabb_array = np.array([aabb.min_bound, aabb.max_bound])
-config["aabb"] = aabb_array.tolist()
-
-print(config)
-json_object = json.dumps(config, indent = 4)
-
-if args.save:
-    with open(args.dataset_path, 'w') as f:
-        json.dump(config, f, indent = 4)
-    
