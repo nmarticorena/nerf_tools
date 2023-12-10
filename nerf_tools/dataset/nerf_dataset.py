@@ -180,6 +180,34 @@ def load_from_json(filepath: str) -> NeRFDataset:
 
     return NeRFDataset(**filtered_data_dict)
 
+ROS = False
+try:
+    import rospy
+    from sensor_msgs.msg import Image, CameraInfo
+    ROS = True
+except:
+    print("ROS not installed")
+
+if ROS:
+    class RosToNeRF(NeRFDataset):
+        def __init__(self, folder, camera_info: CameraInfo):
+            super().__init__(folder = folder, ros = True)
+            self.fl_x = camera_info.K[0]
+            self.fl_y = camera_info.K[4]
+            self.cx = camera_info.K[2]
+            self.cy = camera_info.K[5]
+            self.h = camera_info.height
+            self.w = camera_info.width
+            max_depth = 10.0
+            max_np_uint16 = 1 << 16
+            self.integer_depth_scale = max_depth / max_np_uint16  # this number is the inverse of each pixel value 
+            
 
 
+        def record_frame(self, img:Image , depth: Image, transform:sm.SE3):
+            frame = NeRFFrame()
+            frame.transform_matrix = transform.A
+            frame.rgb = img
+            frame.depth = depth
 
+            return super().add_frame(frame)
