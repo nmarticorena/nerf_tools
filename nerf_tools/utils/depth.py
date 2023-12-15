@@ -8,7 +8,10 @@ timing = True
 if timing:
     import time
 
-def get_pointcloud(dataset: Union[NeRFDataset, ReplicaDataset], max_depth = 10, skip_frames = 1) \
+def get_pointcloud(dataset: Union[NeRFDataset, ReplicaDataset], 
+                   max_depth = 10, 
+                   skip_frames = 1, 
+                   filter_step = 5) \
     -> o3d.geometry.PointCloud:
 
     pcd_final = o3d.geometry.PointCloud()
@@ -33,7 +36,7 @@ def get_pointcloud(dataset: Union[NeRFDataset, ReplicaDataset], max_depth = 10, 
                 end = time.time()
                 print(f"Frame {ix} took {end - start} seconds")        
         # downsample the point cloud 
-        if ix % 5 == 0:
+        if ix % filter_step == 0:
             if timing:
                 start = time.time()
             pcd_final = pcd_final.voxel_down_sample(voxel_size=0.04)
@@ -52,7 +55,7 @@ def get_tsdf(dataset: Union[NeRFDataset, ReplicaDataset]):
    
     camera = dataset.get_camera()
     for ix, frame in enumerate(dataset.frames):
-        rgbd, pose = dataset.sample_o3d(ix, depth_trunc= 0.8)
+        rgbd, pose = dataset.sample_o3d(ix, depth_trunc= 10.0)
 
         volume.integrate(
             rgbd,
