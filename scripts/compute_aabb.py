@@ -36,15 +36,21 @@ if args.dataset == 'nerf':
 else:
     from nerf_tools.dataset.replicaCAD_dataset import ReplicaDataset as Dataset
 
-pcd = get_pointcloud(oDataset, 2.0, 3)
+pcd = get_pointcloud(oDataset, 2.0, 1, 100)
 
 aabb = pcd.get_axis_aligned_bounding_box()
+
+min_bound = aabb.min_bound - np.array([0.5, 0.5, 0])
+max_bound = aabb.max_bound + np.array([0.5, 0.5, 0])
+
+aabb = o3d.geometry.AxisAlignedBoundingBox(min_bound, max_bound)
+
 aabb.color = (1,0,0)
 
 
 o3d.visualization.draw_geometries([pcd, aabb])
 
-aabb_array = np.array([aabb.min_bound, aabb.max_bound])
+aabb_array = np.array([aabb.min_bound - 0.5, aabb.max_bound + 0.5])
 config["aabb"] = aabb_array.tolist()
 
 print(config)
