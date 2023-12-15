@@ -190,7 +190,7 @@ except:
 
 if ROS:
     class RosToNeRF(NeRFDataset):
-        def __init__(self, folder, camera_info: CameraInfo):
+        def __init__(self, folder, camera_info: CameraInfo, max_depth=10.0):
             super().__init__(folder = folder, ros = True)
             self.fl_x = camera_info.K[0]
             self.fl_y = camera_info.K[4]
@@ -198,9 +198,9 @@ if ROS:
             self.cy = camera_info.K[5]
             self.h = camera_info.height
             self.w = camera_info.width
-            max_depth = 10.0
-            max_np_uint16 = 1 << 16
-            self.integer_depth_scale = max_depth / max_np_uint16  # this number is the inverse of each pixel value 
+            self.max_depth = max_depth
+            max_np_uint = 1 << 16
+            self.integer_depth_scale = self.max_depth / max_np_uint
             
 
 
