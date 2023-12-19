@@ -28,16 +28,18 @@ class NeRFDataset:
     integer_depth_scale : float = 0.0
     depth_scale : float = 0.0
     frames: List[None] = field(default_factory=list)
-    folder: str = "test"
+    folder: str = ""
     ros: bool = False
     n_frames: int = 0
     n_views: int = 0
     gt_mesh_path : str = ""
     frames_index : List[None] = field(default_factory=list)
+    path: str = ""
+
 
     def __post_init__(self, *args, **kwargs):
         self.n_frames = 0
-        os.makedirs(self.folder, exist_ok=True)
+        os.makedirs(f"{self.path}/{self.folder}", exist_ok=True)
 
     def get_camera(self):
         return open3d.camera.PinholeCameraIntrinsic(int(self.w), 
@@ -67,7 +69,7 @@ class NeRFDataset:
             img_path = self.frames[idx]['file_path'] + '.png' 
         else:
             img_path = self.frames[idx]['file_path']
-        color = cv2.imread(self.folder + '/' + img_path)
+        color = cv2.imread(self.path + "/"+ img_path)
 
         # Convert the image to a numpy array
         # image_array = color.to_numpy_array()
@@ -78,7 +80,7 @@ class NeRFDataset:
         # Convert the BGR image array back to an Open3D image
         color = open3d.geometry.Image(bgr_image_array)
 
-        depth = open3d.io.read_image(self.folder + '/' + self.frames[idx]['depth_path'])
+        depth = open3d.io.read_image(self.path + "/"+ self.frames[idx]['depth_path'])
         rgbd = open3d.geometry.RGBDImage.create_from_color_and_depth(
             color, depth, depth_scale = 1.0/(self.integer_depth_scale),
             depth_trunc=depth_trunc, convert_rgb_to_intensity=False)
@@ -121,18 +123,20 @@ class NeRFDataset:
         frame_json["transform_matrix"] = frame.transform_matrix.tolist()
 
         # Save rgb img
-        rgb_filename = f"{self.folder}/rgb_{self.n_frames:04d}.png"
+        rgb_filename = f"rgb_{self.n_frames:04d}.png"
+        write_rgb_filename = f"{self.path}/{rgb_filename}"
         if self.ros:
-            cv2.imwrite(rgb_filename, cv2.cvtColor(
+            cv2.imwrite(write_rgb_filename, cv2.cvtColor(
                         np.uint8(frame.rgb), cv2.COLOR_BGRA2RGBA))
         else:
-            cv2.imwrite(rgb_filename, frame.rgb)
+            cv2.imwrite(write_rgb_filename, frame.rgb)
 
         # Save depth img
         # First convert to uint16:
         depth_uint16 = (frame.depth * 1/self.integer_depth_scale).astype(np.uint16) 
-        depth_filename = f"{self.folder}/depth_{self.n_frames:04d}.png"
-        cv2.imwrite(depth_filename, 
+        depth_filename = f"depth_{self.n_frames:04d}.png"
+        
+        cv2.imwrite(f"{self.path}/{depth_filename}", 
                                depth_uint16, [cv2.CV_16UC1, cv2.CV_16UC1])
 
         frame_json["file_path"] = rgb_filename
@@ -177,8 +181,10 @@ def load_from_json(filepath: str) -> NeRFDataset:
     expected_keys = set(NeRFDataset.__annotations__.keys())
     filtered_data_dict = {k: v for k, v in nerf_json.items() if k in expected_keys}
    
+    path = os.path.dirname(filepath)
 
-    return NeRFDataset(**filtered_data_dict)
+
+    return NeRFDataset(**filtered_data_dict, path = path)
 
 ROS = False
 try:
@@ -191,7 +197,7 @@ except:
 if ROS:
     class RosToNeRF(NeRFDataset):
         def __init__(self, folder, camera_info: CameraInfo, max_depth=10.0):
-            super().__init__(folder = folder, ros = True)
+            super().__init__(path = folder, folder = "", ros = True)
             self.fl_x = camera_info.K[0]
             self.fl_y = camera_info.K[4]
             self.cx = camera_info.K[2]
