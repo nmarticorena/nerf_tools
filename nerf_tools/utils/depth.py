@@ -11,7 +11,8 @@ if timing:
 def get_pointcloud(dataset: Union[NeRFDataset, ReplicaDataset], 
                    max_depth = 10, 
                    skip_frames = 1, 
-                   filter_step = 5) \
+                   filter_step = 5,
+                   voxel_size = 0.05) \
     -> o3d.geometry.PointCloud:
 
     pcd_final = o3d.geometry.PointCloud()
@@ -39,7 +40,7 @@ def get_pointcloud(dataset: Union[NeRFDataset, ReplicaDataset],
         if ix % filter_step == 0:
             if timing:
                 start = time.time()
-            pcd_final = pcd_final.voxel_down_sample(voxel_size=0.04)
+            pcd_final = pcd_final.voxel_down_sample(voxel_size=voxel_size)
             if timing:
                 end = time.time()
                 print(f"Downsample took {end - start} seconds")
