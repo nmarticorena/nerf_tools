@@ -5,11 +5,12 @@ class SamplePCD:
     skip_frames: int = 1 # Skip every n frames
     down_sample_frames: int = 1 # Downsample every n frames
     down_sample_voxel_size: float = 0.01 # Downsample voxel size
+    max_depth: float = 10.0 # Max depth to sample
     
 @dataclass
 class DatasetPath:
     type: str = "nerf" # Dataset to use
-    dataset_path: str = '/home/nmarticorena/Documents/tools/RLBench/'  # Path to the dataset 
+    dataset_path: str = '/media/nmarticorena/DATA/datasets/NeRFCapture/cupboard'  # Path to the dataset 
     
 @dataclass
 class AABB:
