@@ -9,6 +9,8 @@ import open3d as o3d
 import numpy as np
 import os
 import json
+import spatialmath as sm
+
 
 from dataclasses import dataclass
 import tyro
@@ -39,6 +41,10 @@ pcd = get_pointcloud(oDataset, 2.0, args.pcd.skip_frames,
                      args.pcd.down_sample_frames,
                      voxel_size= args.pcd.down_sample_voxel_size)
 
+R = sm.SE3.Rx(np.pi/2) * sm.SE3.Ry(np.pi/2)
+pcd = pcd.transform(R.A)
+
+o3d.io.write_point_cloud("test.ply", pcd)
 
 aabb = pcd.get_axis_aligned_bounding_box()
 
