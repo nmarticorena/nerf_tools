@@ -1,5 +1,6 @@
 import open3d as o3d
 import numpy as np
+
 from nerf_tools.dataset.nerf_dataset import NeRFDataset
 from nerf_tools.dataset.replicaCAD_dataset import ReplicaDataset
 from typing import Union
@@ -8,8 +9,12 @@ timing = True
 if timing:
     import time
 
+def get_camera(intrinsic, extrinsic)-> o3d.geometry.LineSet:
+    camera = o3d.geometry.LimeSet.create_camera_visualization(intrinsic, extrinsic)
+    return camera
+
 def get_pointcloud(dataset: Union[NeRFDataset, ReplicaDataset], 
-                   max_depth = 10, 
+                   max_depth = 10.0, 
                    skip_frames = 1, 
                    filter_step = 5,
                    voxel_size = 0.05) \
@@ -44,7 +49,7 @@ def get_pointcloud(dataset: Union[NeRFDataset, ReplicaDataset],
             if timing:
                 end = time.time()
                 print(f"Downsample took {end - start} seconds")
-    pcd_final = pcd_final.voxel_down_sample(voxel_size=0.04)
+    pcd_final = pcd_final.voxel_down_sample(voxel_size=voxel_size)
     return pcd_final
             
 
