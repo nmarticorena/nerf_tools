@@ -7,7 +7,11 @@ import os
 import multiprocessing as mp
 import spatialmath as sm
 import open3d
-from nerf_tools.utils.utils import * 
+# from nerf_tools.utils.depth import * 
+import open3d as o3d
+def get_camera(intrinsic, extrinsic)-> o3d.geometry.LineSet:
+    camera = o3d.geometry.LimeSet.create_camera_visualization(intrinsic, extrinsic)
+    return camera
 
 @dataclass
 class NeRFFrame:
