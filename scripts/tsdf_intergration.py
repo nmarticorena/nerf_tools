@@ -6,10 +6,8 @@ dataset is correct
 '''
 
 import open3d as o3d
-import numpy as np
 import os
 import json
-import argparse
 from nerf_tools.utils.depth import get_tsdf
 
 from dataclasses import dataclass

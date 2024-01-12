@@ -41,11 +41,6 @@ pcd = get_pointcloud(oDataset, 2.0, args.pcd.skip_frames,
                      args.pcd.down_sample_frames,
                      voxel_size= args.pcd.down_sample_voxel_size)
 
-R = sm.SE3.Rx(np.pi/2) * sm.SE3.Ry(np.pi/2)
-pcd = pcd.transform(R.A)
-
-o3d.io.write_point_cloud("test.ply", pcd)
-
 aabb = pcd.get_axis_aligned_bounding_box()
 
 min_bound = aabb.min_bound - np.array([args.extra, args.extra, 0])
@@ -55,14 +50,21 @@ aabb = o3d.geometry.AxisAlignedBoundingBox(min_bound, max_bound)
 
 aabb.color = (1,0,0)
 
-
-o3d.visualization.draw_geometries([pcd, aabb])
+cameras = oDataset.draw_cameras()
+final = [pcd, aabb , *cameras]
+import pdb
+pdb.set_trace()
+o3d.visualization.draw_geometries(final)
 
 aabb_array = np.array([aabb.min_bound - args.extra, aabb.max_bound + args.extra])
 config["aabb"] = aabb_array.tolist()
 
-print(config)
 json_object = json.dumps(config, indent = 4)
+R = sm.SE3.Rx(np.pi/2) * sm.SE3.Ry(np.pi/2)
+pcd = pcd.transform(R.A)
+
+o3d.io.write_point_cloud("test.ply", pcd)
+
 
 if args.save:
     with open(dataset_path, 'w') as f:

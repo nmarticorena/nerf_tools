@@ -35,7 +35,10 @@ else:
     from nerf_tools.dataset.replicaCAD_dataset import ReplicaDataset as Dataset
 
 
-o3d.visualization.draw_geometries([get_pointcloud(oDataset, skip_frames= 4, max_depth= 2.0)])
+o3d.visualization.draw_geometries([get_pointcloud(oDataset, 
+                                                  skip_frames= 1, 
+                                                  max_depth= 2.0, 
+                                                  filter_step= 100)])
 
 
 
