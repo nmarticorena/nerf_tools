@@ -18,3 +18,16 @@ class AABB:
     pcd: SamplePCD = SamplePCD() # Sample Point cloud parameters
     dataset: DatasetPath = DatasetPath() # Dataset parameters
     save: bool = True # Save the aabb to the dataset 
+
+@dataclass 
+class Bias:
+    dataset: DatasetPath = DatasetPath()
+    new_folder: str = ""
+    distance: float = 0.25   
+
+@dataclass 
+class Mask:
+    dataset: DatasetPath = DatasetPath()
+    new_folder: str = ""
+    masked_folder: str = ""
+    inv: bool = False
