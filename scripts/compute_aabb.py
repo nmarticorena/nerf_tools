@@ -52,8 +52,6 @@ aabb.color = (1,0,0)
 
 cameras = oDataset.draw_cameras()
 final = [pcd, aabb , *cameras]
-import pdb
-pdb.set_trace()
 o3d.visualization.draw_geometries(final)
 
 aabb_array = np.array([aabb.min_bound - args.extra, aabb.max_bound + args.extra])
