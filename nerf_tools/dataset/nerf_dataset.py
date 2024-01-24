@@ -39,6 +39,7 @@ class NeRFDataset:
     gt_mesh_path : str = ""
     frames_index : List[None] = field(default_factory=list)
     path: str = ""
+    max_depth: float = 10.0
 
 
     def __post_init__(self, *args, **kwargs):
@@ -137,7 +138,11 @@ class NeRFDataset:
 
         # Save depth img
         # First convert to uint16:
-        depth_uint16 = (frame.depth * 1/self.integer_depth_scale).astype(np.uint16) 
+        
+        masked_depth = frame.depth.copy()
+        masked_depth[masked_depth > self.max_depth ] = 0 # Mask the max depth
+        depth_uint16 = (masked_depth * 1/self.integer_depth_scale).astype(np.uint16) 
+
         depth_filename = f"depth_{self.n_frames:04d}.png"
         
         cv2.imwrite(f"{self.path}/{depth_filename}", 
