@@ -37,9 +37,11 @@ if args.dataset.type == 'nerf':
 else:
     from nerf_tools.dataset.replicaCAD_dataset import ReplicaDataset as Dataset
 
-pcd = get_pointcloud(oDataset, 2.0, args.pcd.skip_frames, 
-                     args.pcd.down_sample_frames,
+pcd = get_pointcloud(oDataset, max_depth = args.pcd.max_depth, 
+                     skip_frames= args.pcd.skip_frames, 
+                     filter_step= args.pcd.down_sample_frames,
                      voxel_size= args.pcd.down_sample_voxel_size)
+
 
 aabb = pcd.get_axis_aligned_bounding_box()
 

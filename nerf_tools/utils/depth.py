@@ -42,7 +42,7 @@ def get_pointcloud(dataset: Union[NeRFDataset, ReplicaDataset],
                 end = time.time()
                 print(f"Frame {ix} took {end - start} seconds")        
         # downsample the point cloud 
-        if ix % filter_step == 0:
+        if ix % (filter_step * skip_frames) == 0:
             if timing:
                 start = time.time()
             pcd_final = pcd_final.voxel_down_sample(voxel_size=voxel_size)
