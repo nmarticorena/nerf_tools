@@ -3,6 +3,9 @@ Merge datasets:
 
 This script merge the datasets from the different sources into a single dataset.
 
+Example usage:
+python3 /home/nmarticorena/Documents/phd_tools/scripts/merge_datasets.py --folders results/unity_scans/unity_2  results/unity_scans/unity_2_back --target-folder results/unity_scans_unity_2_merged
+
 '''
 
 
