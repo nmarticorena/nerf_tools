@@ -45,6 +45,15 @@ class NeRFDataset:
     path: str = ""
     max_depth: float = 10.0
 
+    def __str__(self):
+        string = f"""NeRF Dataset
+        aabb = {self.aabb}
+        n_frames = {self.n_frames}
+        folder = {self.folder}
+        path = {self.path}
+        """
+        return string
+
     def __post_init__(self, *args, **kwargs):
         self.n_frames = 0
         os.makedirs(f"{self.path}/{self.folder}", exist_ok=True)
