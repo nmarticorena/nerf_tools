@@ -203,6 +203,9 @@ def load_from_json(filepath: str) -> NeRFDataset:
     Returns:
         NeRFDataset: NeRFDataset instance.
     """
+    if not filepath.endswith(".json"):
+        filepath = os.path.join(filepath, "transforms.json")
+
     with open(filepath, "r") as f:
         nerf_json = json.load(f)
 
