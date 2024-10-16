@@ -13,7 +13,8 @@ import open3d as o3d
 
 
 def get_camera(intrinsic, extrinsic) -> o3d.geometry.LineSet:
-    camera = o3d.geometry.LimeSet.create_camera_visualization(intrinsic, extrinsic)
+    camera = o3d.geometry.LimeSet.create_camera_visualization(
+        intrinsic, extrinsic)
     return camera
 
 
@@ -97,7 +98,8 @@ class NeRFDataset:
         # Convert the BGR image array back to an Open3D image
         color = open3d.geometry.Image(bgr_image_array)
 
-        depth = open3d.io.read_image(self.path + "/" + self.frames[idx]["depth_path"])
+        depth = open3d.io.read_image(
+            self.path + "/" + self.frames[idx]["depth_path"])
         rgbd = open3d.geometry.RGBDImage.create_from_color_and_depth(
             color,
             depth,
@@ -161,12 +163,14 @@ class NeRFDataset:
 
         masked_depth = frame.depth.copy()
         masked_depth[masked_depth > self.max_depth] = 0  # Mask the max depth
-        depth_uint16 = (masked_depth * 1 / self.integer_depth_scale).astype(np.uint16)
+        depth_uint16 = (masked_depth * 1 /
+                        self.integer_depth_scale).astype(np.uint16)
 
         depth_filename = f"depth_{self.n_frames:04d}.png"
 
         cv2.imwrite(
-            f"{self.path}/{depth_filename}", depth_uint16, [cv2.CV_16UC1, cv2.CV_16UC1]
+            f"{self.path}/{depth_filename}", depth_uint16, [
+                cv2.CV_16UC1, cv2.CV_16UC1]
         )
 
         frame_json["file_path"] = rgb_filename
@@ -210,7 +214,8 @@ def load_from_json(filepath: str) -> NeRFDataset:
         nerf_json = json.load(f)
 
     expected_keys = set(NeRFDataset.__annotations__.keys())
-    filtered_data_dict = {k: v for k, v in nerf_json.items() if k in expected_keys}
+    filtered_data_dict = {k: v for k,
+                          v in nerf_json.items() if k in expected_keys}
 
     path = os.path.dirname(filepath)
 
