@@ -1,4 +1,6 @@
 import open3d as o3d
+import os
+import shutil
 import spatialmath as sm
 import numpy as np
 from nerf_tools.dataset.nerf_dataset import NeRFDataset as Dataset
@@ -10,7 +12,8 @@ def point_cloud_saver(pcd: o3d.geometry.PointCloud, path: str):
 
     POINT3D_ID, X, Y, Z, R, G, B, ERROR, TRACK[] as (IMAGE_ID, POINT2D_IDX)
     """
-    with open(path, "w") as f:
+    filepath = os.path.join(path, "points3D.txt")
+    with open(filepath, "w") as f:
         for i in range(len(pcd.points)):
             x, y, z = pcd.points[i]
             r, g, b = pcd.colors[i]
@@ -20,6 +23,20 @@ def point_cloud_saver(pcd: o3d.geometry.PointCloud, path: str):
             f.write(f"{i} {x} {y} {z} {r} {g} {b} 0 0\n")
 
 
+def camera_info_saver(dataset: Dataset, path):
+    """
+    Save the camera intrinsics to a txt file using the colmap standard
+
+    CAMERA_ID, MODEL, WIDTH, HEIGHT, PARAMS[]
+
+    """
+    filepath = os.path.join(path, "cameras.txt")
+    with open(filepath, "w") as f:
+        f.write(
+            f"1 PINHOLE {dataset.w} {dataset.h} {dataset.fl_x} {dataset.fl_y} {dataset.cx} {dataset.cy}\n"
+        )
+
+
 def camera_poses_saver(dataset: Dataset, path):
     """
     Save the camera poses to a txt file using the colmap standard
@@ -27,7 +44,9 @@ def camera_poses_saver(dataset: Dataset, path):
     IMAGE_ID, QW, QX, QY, QZ, TX, TY, TZ, CAMERA_ID, NAME
 
     """
-    with open(path, "w") as f:
+    filepath = os.path.join(path, "images.txt")
+    os.makedirs(os.path.join(dataset.path, "images"), exist_ok=True)
+    with open(filepath, "w") as f:
         for i in range(len(dataset.frames)):
             frame = dataset.frames[i]
 
@@ -41,6 +60,10 @@ def camera_poses_saver(dataset: Dataset, path):
                 R_WC, order="sxyz"
             )  # we pass the array to skip the check
             frame_name = frame["file_path"].replace("images/", "")
+            shutil.copy(
+                os.path.join(dataset.path, frame["file_path"]),
+                os.path.join(dataset.path, "images", frame_name),
+            )
             camera_id = 1
             f.write(
                 f"{i} {qw} {qx} {qy} {qz} {tx} {ty} {tz} {camera_id} {frame_name}\n\n"

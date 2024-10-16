@@ -9,20 +9,20 @@ import open3d as o3d
 import numpy as np
 import os
 import json
-import spatialmath as sm
-
-
-from dataclasses import dataclass
 import tyro
 
 from nerf_tools.utils.depth import get_pointcloud
-from nerf_tools.configs import *
+import nerf_tools.configs as configs
+from nerf_tools.utils.colmap_tools import (
+    point_cloud_saver,
+    camera_poses_saver,
+    camera_info_saver,
+)
 
-args = tyro.cli(AABB)
+args = tyro.cli(configs.AABB)
 
 
 if args.dataset.type == "nerf":
-    from nerf_tools.dataset.nerf_dataset import NeRFDataset as Dataset
     from nerf_tools.dataset.nerf_dataset import load_from_json
 
     dataset_path = args.dataset.dataset_path
@@ -34,8 +34,6 @@ if args.dataset.type == "nerf":
     oDataset = load_from_json(dataset_path)
     camera_index = range(0, len(oDataset.frames))
     oDataset.set_frames_index(camera_index)
-else:
-    from nerf_tools.dataset.replicaCAD_dataset import ReplicaDataset as Dataset
 
 pcd = get_pointcloud(
     oDataset,
@@ -59,7 +57,8 @@ cameras = oDataset.draw_cameras()
 final = [pcd, aabb, *cameras]
 o3d.visualization.draw_geometries(final)
 
-aabb_array = np.array([aabb.min_bound - args.extra, aabb.max_bound + args.extra])
+aabb_array = np.array([aabb.min_bound - args.extra,
+                      aabb.max_bound + args.extra])
 config["aabb"] = aabb_array.tolist()
 
 json_object = json.dumps(config, indent=4)
@@ -68,6 +67,14 @@ json_object = json.dumps(config, indent=4)
 
 o3d.io.write_point_cloud("test.ply", pcd)
 
+os.makedirs(os.path.join(args.dataset.dataset_path,
+            "sparse", "0"), exist_ok=True)
+
+point_cloud_saver(pcd, os.path.join(args.dataset.dataset_path, "sparse/0/"))
+camera_poses_saver(oDataset, os.path.join(
+    args.dataset.dataset_path, "sparse/0/"))
+camera_info_saver(oDataset, os.path.join(
+    args.dataset.dataset_path, "sparse/0/"))
 
 if args.save:
     with open(dataset_path, "w") as f:
