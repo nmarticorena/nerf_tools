@@ -59,7 +59,7 @@ def camera_poses_saver(dataset: Dataset, path):
             qw, qx, qy, qz = sm.base.r2q(
                 R_WC, order="sxyz"
             )  # we pass the array to skip the check
-            frame_name = frame["file_path"].replace("images/", "")
+            frame_name = frame["file_path"].split("/")[-1]
             shutil.copy(
                 os.path.join(dataset.path, frame["file_path"]),
                 os.path.join(dataset.path, "images", frame_name),
