@@ -21,7 +21,7 @@ def point_cloud_saver(pcd: o3d.geometry.PointCloud, path: str):
             g = int(g * 255)
             b = int(b * 255)
             f.write(f"{i} {x} {y} {z} {r} {g} {b} 0 0\n")
-
+        f.write("#\n")
 
 def camera_info_saver(dataset: Dataset, path):
     """
@@ -72,3 +72,5 @@ def camera_poses_saver(dataset: Dataset, path):
             f.write(
                 f"{i} {qw} {qx} {qy} {qz} {tx} {ty} {tz} {camera_id} {frame_name}\n\n"
             )
+
+        f.write("#\n")
