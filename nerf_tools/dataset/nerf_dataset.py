@@ -21,8 +21,8 @@ def get_camera(intrinsic, extrinsic) -> o3d.geometry.LineSet:
 @dataclass
 class NeRFFrame:
     transform_matrix: List = field(default_factory=lambda: [])
-    rgb: np.array = np.array([])
-    depth: np.array = np.array([])
+    rgb: np.array = field(default_factory=lambda :np.array([]))
+    depth: np.array = field(default_factory=lambda :np.array([]))
 
 
 @dataclass
@@ -133,6 +133,9 @@ class NeRFDataset:
 
     def get_camera_intrinsic(self):
         return np.array([[self.fl_x, 0, self.cx], [0, self.fl_y, self.cy], [0, 0, 1]])
+
+    def get_image_size(self):
+        return self.w, self.h
 
     def get_projection_matrix(self):
         return np.array(
