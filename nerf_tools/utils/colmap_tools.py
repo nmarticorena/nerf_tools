@@ -60,10 +60,14 @@ def camera_poses_saver(dataset: Dataset, path):
                 R_WC, order="sxyz"
             )  # we pass the array to skip the check
             frame_name = frame["file_path"].split("/")[-1]
-            shutil.copy(
-                os.path.join(dataset.path, frame["file_path"]),
-                os.path.join(dataset.path, "images", frame_name),
-            )
+            try:
+                shutil.copy(
+                    os.path.join(dataset.path, frame["file_path"]),
+                    os.path.join(dataset.path, "images", frame_name),
+                )
+            except shutil.SameFileError:
+                pass
+
             camera_id = 1
             f.write(
                 f"{i} {qw} {qx} {qy} {qz} {tx} {ty} {tz} {camera_id} {frame_name}\n\n"
