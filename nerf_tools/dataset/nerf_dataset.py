@@ -4,7 +4,6 @@ from typing import List
 import numpy as np
 import cv2
 import os
-import multiprocessing as mp
 import spatialmath as sm
 import open3d
 
@@ -13,17 +12,15 @@ import open3d as o3d
 
 
 def get_camera(intrinsic, extrinsic) -> o3d.geometry.LineSet:
-    camera = o3d.geometry.LimeSet.create_camera_visualization(
+    camera = o3d.geometry.LineSet.create_camera_visualization(
         intrinsic, extrinsic)
     return camera
-
 
 @dataclass
 class NeRFFrame:
     transform_matrix: List = field(default_factory=lambda: [])
-    rgb: np.array = field(default_factory=lambda :np.array([]))
-    depth: np.array = field(default_factory=lambda :np.array([]))
-
+    rgb: np.ndarray=field(default_factory=lambda :np.array([]))
+    depth: np.ndarray = field(default_factory=lambda :np.array([]))
 
 @dataclass
 class NeRFDataset:
@@ -76,7 +73,7 @@ class NeRFDataset:
             )
         return Lines
 
-    def sample_o3d(self, idx, depth_trunc=10.0):
+    def sample_rgb(self, idx):
         """
         input idx: index of sample
         """
@@ -88,18 +85,47 @@ class NeRFDataset:
         else:
             img_path = self.frames[idx]["file_path"]
         color = cv2.imread(self.path + "/" + img_path)
+        color = cv2.cvtColor(color, cv2.COLOR_BGR2RGB)
+        return color
 
-        # Convert the image to a numpy array
-        # image_array = color.to_numpy_array()
+    def sample_depth(self, idx):
+        """
+        input idx: index of sample
+        """
+        assert idx >= 0 and idx < len(
+            self.frames
+        ), f"sample index out of range [0,{len(self.frames)}]"
+        if "." not in self.frames[idx]["depth_path"]:
+            depth_path = self.frames[idx]["depth_path"] + ".png"
+        else:
+            depth_path = self.frames[idx]["depth_path"]
+        depth = cv2.imread(self.path + "/" + depth_path, cv2.IMREAD_UNCHANGED)
+        return depth
 
-        # Convert RGB to BGR format using OpenCV
-        bgr_image_array = cv2.cvtColor(color, cv2.COLOR_RGB2BGR)
+    def sample_metric_depth(self, idx):
+        """
+        input idx: index of sample
+        """
+        assert idx >= 0 and idx < len(
+            self.frames
+        ), f"sample index out of range [0,{len(self.frames)}]"
+        depth = self.sample_depth(idx)
+        depth = depth.astype(np.float32) * self.integer_depth_scale
+        return depth
+
+    def sample_o3d(self, idx, depth_trunc=10.0):
+        """
+        input idx: index of sample
+        """
+        assert idx >= 0 and idx < len(
+            self.frames
+        ), f"sample index out of range [0,{len(self.frames)}]"
+
+        color = self.sample_rgb(idx)
+        depth = self.sample_depth(idx)
 
         # Convert the BGR image array back to an Open3D image
-        color = open3d.geometry.Image(bgr_image_array)
-
-        depth = open3d.io.read_image(
-            self.path + "/" + self.frames[idx]["depth_path"])
+        color = open3d.geometry.Image(color)
         rgbd = open3d.geometry.RGBDImage.create_from_color_and_depth(
             color,
             depth,
@@ -108,9 +134,9 @@ class NeRFDataset:
             convert_rgb_to_intensity=False,
         )
 
-        pose = self.get_transforms_cv2([idx])
+        pose = self.get_transforms_cv2([idx])[0]
 
-        return rgbd, pose[0]
+        return rgbd, pose
 
     def set_frames_index(self, indexs):
         self.frames_index = indexs
@@ -128,7 +154,6 @@ class NeRFDataset:
         transforms_cv2 = []
         for transform in transforms:
             transforms_cv2.append(transform @ sm.SE3.Rx(np.pi, unit="rad").A)
-            # transforms_cv2.append(transform)
         return transforms_cv2
 
     def get_camera_intrinsic(self):
@@ -201,6 +226,8 @@ class NeRFDataset:
             json.dump(nerf_json, f, indent=4)
         return
 
+    def get_frame(self, idx):
+        return self.frames[idx]
 
 def load_from_json(filepath: str) -> NeRFDataset:
     """Create a NeRFDataset instance from a transform.json file.
