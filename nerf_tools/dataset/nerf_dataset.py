@@ -102,6 +102,25 @@ class NeRFDataset:
         depth = cv2.imread(self.path + "/" + depth_path, cv2.IMREAD_UNCHANGED)
         return depth
 
+    def depth_original_scale(self, depth):
+        # Change resolution to 256 x 192 original of the arkit
+
+        new_depth = cv2.resize(depth, dsize = (256, 192), interpolation = cv2.INTER_NEAREST_EXACT)
+        return new_depth
+
+
+    def load_metric_depth(self, rgb_filename):
+        """
+        input rgb_filename: filename of the rgb image
+        """
+        idx = -1
+        for i, frame in enumerate(self.frames):
+            if frame["file_path"].split("/")[-1] == rgb_filename:
+                idx = i
+                break
+        assert idx != -1, f"rgb_filename {rgb_filename} not found"
+        return self.sample_metric_depth(idx)
+
     def sample_metric_depth(self, idx):
         """
         input idx: index of sample
