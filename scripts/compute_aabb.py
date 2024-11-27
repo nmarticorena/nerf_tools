@@ -53,9 +53,10 @@ aabb = o3d.geometry.AxisAlignedBoundingBox(min_bound, max_bound)
 
 aabb.color = (1, 0, 0)
 
-cameras = oDataset.draw_cameras()
-final = [pcd, aabb, *cameras]
-o3d.visualization.draw_geometries(final)
+if args.gui:
+    cameras = oDataset.draw_cameras()
+    final = [pcd, aabb, *cameras]
+    o3d.visualization.draw_geometries(final)
 
 aabb_array = np.array([aabb.min_bound - args.extra,
                       aabb.max_bound + args.extra])
