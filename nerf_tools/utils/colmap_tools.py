@@ -45,6 +45,7 @@ def camera_poses_saver(dataset: Dataset, path):
 
     """
     filepath = os.path.join(path, "images.txt")
+    print(dataset.path)
     os.makedirs(os.path.join(dataset.path, "images"), exist_ok=True)
     with open(filepath, "w") as f:
         for i in range(len(dataset.frames)):
@@ -55,11 +56,13 @@ def camera_poses_saver(dataset: Dataset, path):
             tx, ty, tz = T_WC[:3, 3]
             # before taking the rotation we need to convert them to opencv standard
             R_WC = T_WC[:3, :3]
-            # R_WC = R_WC.norm()  # fix any scaling
             qw, qx, qy, qz = sm.base.r2q(
                 R_WC, order="sxyz"
             )  # we pass the array to skip the check
             frame_name = frame["file_path"].split("/")[-1]
+            if ".png" not in frame["file_path"]:
+                frame["file_path"]  += ".png"
+                frame_name += ".png"
             try:
                 shutil.copy(
                     os.path.join(dataset.path, frame["file_path"]),

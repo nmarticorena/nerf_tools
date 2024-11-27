@@ -108,7 +108,6 @@ class NeRFDataset:
         new_depth = cv2.resize(depth, dsize = (256, 192), interpolation = cv2.INTER_NEAREST_EXACT)
         return new_depth
 
-
     def load_metric_depth(self, rgb_filename):
         """
         input rgb_filename: filename of the rgb image
@@ -116,6 +115,9 @@ class NeRFDataset:
         idx = -1
         for i, frame in enumerate(self.frames):
             if frame["file_path"].split("/")[-1] == rgb_filename:
+                idx = i
+                break
+            elif frame["file_path"] == rgb_filename:
                 idx = i
                 break
         assert idx != -1, f"rgb_filename {rgb_filename} not found"
@@ -145,6 +147,7 @@ class NeRFDataset:
 
         # Convert the BGR image array back to an Open3D image
         color = open3d.geometry.Image(color)
+        depth = open3d.geometry.Image(depth)
         rgbd = open3d.geometry.RGBDImage.create_from_color_and_depth(
             color,
             depth,
@@ -163,6 +166,13 @@ class NeRFDataset:
     def get_transforms(self, indexs):
         return [np.array(self.frames[i]["transform_matrix"]) for i in indexs]
 
+    def to_open3d_reference(self, T):
+        """
+        Convert the camera pose from blender to open3d standard (robotics)
+        """
+        return T @ sm.SE3.Rx(np.pi, unit="rad").A
+
+
     def get_transforms_cv2(self, indexs=[]):
         """
         Return the camera transforms in open cv standards
@@ -174,6 +184,22 @@ class NeRFDataset:
         for transform in transforms:
             transforms_cv2.append(transform @ sm.SE3.Rx(np.pi, unit="rad").A)
         return transforms_cv2
+
+    def get_index_from_path(self, rgb_filename):
+        idx = -1
+        for i, frame in enumerate(self.frames):
+            if frame["file_path"].split("/")[-1] == rgb_filename:
+                idx = i
+                break
+            elif frame["file_path"] == rgb_filename:
+                idx = i
+                break
+        assert idx != -1, f"rgb_filename {rgb_filename} not found"
+        return idx
+
+
+
+
 
     def get_camera_intrinsic(self):
         return np.array([[self.fl_x, 0, self.cx], [0, self.fl_y, self.cy], [0, 0, 1]])
