@@ -12,9 +12,9 @@ import torch
 @dataclass
 class ReplicaFrame:
     transform_matrix:  List = field(default_factory=lambda: [])
-    rgb: np.array = np.array([])
-    depth: np.array = np.array([])
-    noise_depth : np.array = np.array([])
+    rgb: np.array = field(default_factory=lambda :np.array([]))
+    depth: np.array = field(default_factory=lambda :np.array([]))
+    noise_depth : np.array = field(default_factory=lambda :np.array([]))
 
 @dataclass
 class ReplicaDataset:

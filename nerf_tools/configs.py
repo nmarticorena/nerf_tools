@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -20,14 +20,15 @@ class DatasetPath:
 @dataclass
 class AABB:
     extra: float = 0.0  # Extra padding for the result alway positive
-    pcd: SamplePCD = SamplePCD()  # Sample Point cloud parameters
-    dataset: DatasetPath = DatasetPath()  # Dataset parameters
+    pcd: SamplePCD = field(default_factory=lambda :SamplePCD())
+    dataset: DatasetPath = field(default_factory=lambda :DatasetPath())  # Dataset parameters
     save: bool = True  # Save the aabb to the dataset
+    gui: bool = True
 
 
 @dataclass
 class TSDF:
-    dataset: DatasetPath = DatasetPath()
+    dataset: DatasetPath = field(default_factory=lambda :DatasetPath())
     visualize: bool = True
     save: bool = True
     name: str = "mesh"
@@ -36,14 +37,14 @@ class TSDF:
 
 @dataclass
 class Bias:
-    dataset: DatasetPath = DatasetPath()
+    dataset: DatasetPath = field(default_factory=lambda :DatasetPath())
     new_folder: str = ""
     distance: float = 0.25
 
 
 @dataclass
 class Mask:
-    dataset: DatasetPath = DatasetPath()
+    dataset: DatasetPath = field(default_factory=lambda :DatasetPath())
     new_folder: str = ""
     masked_folder: str = ""
     inv: bool = False
