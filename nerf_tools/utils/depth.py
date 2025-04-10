@@ -11,7 +11,8 @@ if timing:
 
 
 def get_camera(intrinsic, extrinsic) -> o3d.geometry.LineSet:
-    camera = o3d.geometry.LimeSet.create_camera_visualization(intrinsic, extrinsic)
+    camera = o3d.geometry.LimeSet.create_camera_visualization(
+        intrinsic, extrinsic)
     return camera
 
 
@@ -19,7 +20,8 @@ def get_frame(
     dataset: Union[NeRFDataset, ReplicaDataset], index: int
 ) -> o3d.geometry.LineSet:
     rgbd, pose = dataset.sample_o3d(index, depth_trunc=10.0)
-    pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, dataset.get_camera())
+    pcd = o3d.geometry.PointCloud.create_from_rgbd_image(
+        rgbd, dataset.get_camera())
     pcd.transform(pose)
     return pcd
 
@@ -68,11 +70,9 @@ def get_pointcloud(
     return pcd_final
 
 
-def get_tsdf(dataset: Union[NeRFDataset, ReplicaDataset], depth_trunc=10):
+def get_tsdf(dataset: Union[NeRFDataset, ReplicaDataset], depth_trunc: float = 10.):
     volume = o3d.pipelines.integration.ScalableTSDFVolume(
-        voxel_length=4.0 / 512.0,
-        sdf_trunc=0.04,
-        color_type=o3d.pipelines.integration.TSDFVolumeColorType.RGB8,
+        voxel_length=4.0 / 512.0, sdf_trunc=0.04, color_type=o3d.pipelines.integration.TSDFVolumeColorType.RGB8,
     )
 
     camera = dataset.get_camera()

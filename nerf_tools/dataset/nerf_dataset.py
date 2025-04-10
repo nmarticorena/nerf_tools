@@ -12,15 +12,16 @@ import open3d as o3d
 
 
 def get_camera(intrinsic, extrinsic) -> o3d.geometry.LineSet:
-    camera = o3d.geometry.LineSet.create_camera_visualization(
-        intrinsic, extrinsic)
+    camera = o3d.geometry.LineSet.create_camera_visualization(intrinsic, extrinsic)
     return camera
+
 
 @dataclass
 class NeRFFrame:
     transform_matrix: List = field(default_factory=lambda: [])
-    rgb: np.ndarray=field(default_factory=lambda :np.array([]))
-    depth: np.ndarray = field(default_factory=lambda :np.array([]))
+    rgb: np.ndarray = field(default_factory=lambda: np.array([]))
+    depth: np.ndarray = field(default_factory=lambda: np.array([]))
+
 
 @dataclass
 class NeRFDataset:
@@ -55,6 +56,7 @@ class NeRFDataset:
     def __post_init__(self, *args, **kwargs):
         self.n_frames = 0
         os.makedirs(f"{self.path}/{self.folder}", exist_ok=True)
+        self.n_frames = len(self.frames)
 
     def get_camera(self):
         return open3d.camera.PinholeCameraIntrinsic(
@@ -105,7 +107,9 @@ class NeRFDataset:
     def depth_original_scale(self, depth):
         # Change resolution to 256 x 192 original of the arkit
 
-        new_depth = cv2.resize(depth, dsize = (256, 192), interpolation = cv2.INTER_NEAREST_EXACT)
+        new_depth = cv2.resize(
+            depth, dsize=(256, 192), interpolation=cv2.INTER_NEAREST_EXACT
+        )
         return new_depth
 
     def load_metric_depth(self, rgb_filename):
@@ -134,9 +138,20 @@ class NeRFDataset:
         depth = depth.astype(np.float32) * self.integer_depth_scale
         return depth
 
+    def sample_pcd(self, idx, depth_trunc=10.0):
+        rgbd, pose = self.sample_o3d(idx, depth_trunc)
+        pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, self.get_camera())
+        pcd.transform(pose)
+        return pcd
+
     def sample_o3d(self, idx, depth_trunc=10.0):
         """
         input idx: index of sample
+        -------
+        Returns
+            RGBD Image
+            Pose
+
         """
         assert idx >= 0 and idx < len(
             self.frames
@@ -163,7 +178,10 @@ class NeRFDataset:
     def set_frames_index(self, indexs):
         self.frames_index = indexs
 
-    def get_transforms(self, indexs):
+    def get_transforms(self, indexs=[]):
+        if indexs == []:
+            indexs = range(len(self.frames))
+
         return [np.array(self.frames[i]["transform_matrix"]) for i in indexs]
 
     def to_open3d_reference(self, T):
@@ -172,8 +190,7 @@ class NeRFDataset:
         """
         return T @ sm.SE3.Rx(np.pi, unit="rad").A
 
-
-    def get_transforms_cv2(self, indexs=[]):
+    def get_transforms_cv2(self, indexs=[]) -> List[np.ndarray]:
         """
         Return the camera transforms in open cv standards
         """
@@ -197,14 +214,16 @@ class NeRFDataset:
         assert idx != -1, f"rgb_filename {rgb_filename} not found"
         return idx
 
-
-
-
-
     def get_camera_intrinsic(self):
         return np.array([[self.fl_x, 0, self.cx], [0, self.fl_y, self.cy], [0, 0, 1]])
 
     def get_image_size(self):
+        """
+        Return the image size
+        Returns
+        -------
+        Tuple (w, h)
+        """
         return self.w, self.h
 
     def get_projection_matrix(self):
@@ -236,14 +255,12 @@ class NeRFDataset:
 
         masked_depth = frame.depth.copy()
         masked_depth[masked_depth > self.max_depth] = 0  # Mask the max depth
-        depth_uint16 = (masked_depth * 1 /
-                        self.integer_depth_scale).astype(np.uint16)
+        depth_uint16 = (masked_depth * 1 / self.integer_depth_scale).astype(np.uint16)
 
         depth_filename = f"depth_{self.n_frames:04d}.png"
 
         cv2.imwrite(
-            f"{self.path}/{depth_filename}", depth_uint16, [
-                cv2.CV_16UC1, cv2.CV_16UC1]
+            f"{self.path}/{depth_filename}", depth_uint16, [cv2.CV_16UC1, cv2.CV_16UC1]
         )
 
         frame_json["file_path"] = rgb_filename
@@ -274,6 +291,7 @@ class NeRFDataset:
     def get_frame(self, idx):
         return self.frames[idx]
 
+
 def load_from_json(filepath: str) -> NeRFDataset:
     """Create a NeRFDataset instance from a transform.json file.
 
@@ -289,8 +307,7 @@ def load_from_json(filepath: str) -> NeRFDataset:
         nerf_json = json.load(f)
 
     expected_keys = set(NeRFDataset.__annotations__.keys())
-    filtered_data_dict = {k: v for k,
-                          v in nerf_json.items() if k in expected_keys}
+    filtered_data_dict = {k: v for k, v in nerf_json.items() if k in expected_keys}
 
     path = os.path.dirname(filepath)
 
