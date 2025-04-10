@@ -56,7 +56,36 @@ aabb.color = (1, 0, 0)
 if args.gui:
     cameras = oDataset.draw_cameras()
     final = [pcd, aabb, *cameras]
-    o3d.visualization.draw_geometries(final)
+    if not args.web:
+        o3d.visualization.draw_geometries(final)
+    else:
+        # TODO
+        import threading
+        o3d.visualization.webrtc_server.enable_webrtc()
+        app = o3d.visualization.gui.Application.instance
+        app.initialize() 
+        window = o3d.visualization.gui.Application.instance.create_window(
+            "Compute AABB", 1920, 1080
+        )
+        scene = o3d.visualization.gui.SceneWidget()
+        scene.scene = o3d.visualization.rendering.Open3DScene(window.renderer)
+        scene.scene.set_background([1, 1, 1, 1])
+        material = o3d.visualization.rendering.MaterialRecord()
+        material.shader = "defaultLit"
+        scene.scene.add_geometry("aabb", aabb,material)
+        scene.scene.add_geometry("pcd", pcd, material)
+
+        for i, camera in enumerate(cameras):
+            scene.scene.add_geometry(f"camera_{i}", camera, material)
+        def step():
+            pass
+        o3d.gui.Application.instance.post_to_main_thread(
+            window, target = step
+        ).start()
+        import time
+        ti = time.time()
+        while time.time() - ti < 200:
+            app.run() 
 
 aabb_array = np.array([aabb.min_bound - args.extra,
                       aabb.max_bound + args.extra])
