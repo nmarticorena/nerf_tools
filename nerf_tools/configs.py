@@ -24,12 +24,13 @@ class AABB:
     dataset: DatasetPath = field(default_factory=lambda :DatasetPath())  # Dataset parameters
     save: bool = True  # Save the aabb to the dataset
     gui: bool = True
+    web: bool = False # to use the webrtc open3d
 
 
 @dataclass
 class TSDF:
     dataset: DatasetPath = field(default_factory=lambda :DatasetPath())
-    visualize: bool = True
+    gui: bool = True
     save: bool = True
     name: str = "mesh"
     depth_trunc: float = 10  # Max depth
