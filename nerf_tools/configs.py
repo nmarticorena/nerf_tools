@@ -12,9 +12,11 @@ class SamplePCD:
 @dataclass
 class DatasetPath:
     type: str = "nerf"  # Dataset to use
+    "Dataset type, nerf or replica"
     dataset_path: str = (
         "/media/nmarticorena/DATA/datasets/NeRFCapture/cupboard"  # Path to the dataset
     )
+    "Full path to the dataset"
 
 
 @dataclass
@@ -30,10 +32,17 @@ class AABB:
 @dataclass
 class TSDF:
     dataset: DatasetPath = field(default_factory=lambda :DatasetPath())
+    "Dataset to use, specifies the type and path"
     gui: bool = True
+    "Visualize result"
     save: bool = True
+    "Save the mesh to the dataset"
     name: str = "mesh"
+    "Name of the mesh to save"
     depth_trunc: float = 10  # Max depth
+    "Max depth to sample"
+    voxel_size: float =  4.0/512.0
+    "Voxel size for the tsdf integration"
 
 
 @dataclass

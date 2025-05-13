@@ -28,18 +28,12 @@ else:
 
 cameras = oDataset.draw_cameras()
 
-mesh = get_tsdf(oDataset, depth_trunc=args.depth_trunc)
+mesh = get_tsdf(oDataset, depth_trunc=args.depth_trunc, voxel_size=args.voxel_size)
 
 if args.save:
     path = f"results/meshes/{args.name}.ply"
     print(f"saving on {path}")
     o3d.io.write_triangle_mesh(path, mesh)
-    # vertices = np.asarray(mesh.vertices)
-    # faces = np.asarray(mesh.triangles)
-    # colors = np.asarray(mesh.vertex_colors) if mesh.has_vertex_colors() else None
-    #
-    # trimesh_mesh = trimesh.Trimesh(vertices=vertices, faces=faces, vertex_colors=colors)
-    # trimesh_mesh.export(path)
 
-if args.visualize:
+if args.gui:
     o3d.visualization.draw_geometries([mesh, *cameras])

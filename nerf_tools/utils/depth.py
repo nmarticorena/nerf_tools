@@ -70,9 +70,9 @@ def get_pointcloud(
     return pcd_final
 
 
-def get_tsdf(dataset: Union[NeRFDataset, ReplicaDataset], depth_trunc: float = 10.):
+def get_tsdf(dataset: Union[NeRFDataset, ReplicaDataset], depth_trunc: float = 10., voxel_size: float = 4.0/512.0) -> o3d.geometry.TriangleMesh:
     volume = o3d.pipelines.integration.ScalableTSDFVolume(
-        voxel_length=4.0 / 512.0, sdf_trunc=0.04, color_type=o3d.pipelines.integration.TSDFVolumeColorType.RGB8,
+        voxel_length=voxel_size, sdf_trunc=0.04, color_type=o3d.pipelines.integration.TSDFVolumeColorType.RGB8,
     )
 
     camera = dataset.get_camera()
