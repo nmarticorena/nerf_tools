@@ -23,6 +23,19 @@ def point_cloud_saver(pcd: o3d.geometry.PointCloud, path: str):
             f.write(f"{i} {x} {y} {z} {r} {g} {b} 0 0\n")
         f.write("#\n")
 
+def normal_saver(pcd: o3d.geometry.PointCloud, path: str):
+    """
+    Save the normals of a point cloud to a txt file using the colmap standard
+
+    POINT3D_ID, NX, NY, NZ
+    """
+    filepath = os.path.join(path, "normals.txt")
+    with open(filepath, "w") as f:
+        for i in range(len(pcd.normals)):
+            nx, ny, nz = pcd.normals[i]
+            f.write(f"{i} {nx} {ny} {nz}\n")
+        f.write("#\n")
+
 def camera_info_saver(dataset: Dataset, path):
     """
     Save the camera intrinsics to a txt file using the colmap standard

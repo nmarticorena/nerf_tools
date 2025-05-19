@@ -25,6 +25,48 @@ def get_frame(
     pcd.transform(pose)
     return pcd
 
+def estimate_normal(depth: np.ndarray,K: np.ndarray, downsample:int = 1) -> np.ndarray:
+    """
+    Estimate the normal of a depth image using the intrinsic camera matrix
+    """
+    depth_downsample = depth[::downsample, ::downsample]
+
+    H, W = depth_downsample.shape
+    fx, fy = K[0, 0], K[1, 1]
+    cx, cy = K[0, 2]/downsample, K[1, 2]/downsample
+
+    # Create grid of pixel coordinates
+    x = np.arange(0, W)
+    y = np.arange(0, H)
+    xx, yy = np.meshgrid(x, y, indexing="xy")
+
+    # Compute 3D coordinates
+    X = (xx - cx) * depth_downsample / fx
+    Y = (yy - cy) * depth_downsample / fy
+    Z = depth_downsample
+
+    # Compute vectors from neighboring pixels
+    Vx = np.zeros((H, W, 3))
+    Vy = np.zeros((H, W, 3))
+
+    Vx[:, :-1, 0] = X[:, 1:] - X[:, :-1]
+    Vx[:, :-1, 1] = Y[:, 1:] - Y[:, :-1]
+    Vx[:, :-1, 2] = Z[:, 1:] - Z[:, :-1]
+
+    Vy[:-1, :, 0] = X[1:, :] - X[:-1, :]
+    Vy[:-1, :, 1] = Y[1:, :] - Y[:-1, :]
+    Vy[:-1, :, 2] = Z[1:, :] - Z[:-1, :]
+
+    # Compute normals using cross product
+    normals = np.cross(Vx, Vy, axis=2)
+
+    # Normalize the normals
+    normals = normals / np.linalg.norm(normals, axis=2, keepdims=True)
+
+    # Replace NaN or infinite values
+    normals = np.nan_to_num(normals)
+    return normals # (H, W, 3)
+
 
 def get_pointcloud(
     dataset: Union[NeRFDataset, ReplicaDataset],
@@ -32,6 +74,7 @@ def get_pointcloud(
     skip_frames=1,
     filter_step=5,
     voxel_size=0.05,
+    normal = False,
 ) -> o3d.geometry.PointCloud:
     pcd_final = o3d.geometry.PointCloud()
     camera = dataset.get_camera()
@@ -67,6 +110,14 @@ def get_pointcloud(
                 end = time.time()
                 print(f"Downsample took {end - start} seconds")
     pcd_final = pcd_final.voxel_down_sample(voxel_size=voxel_size)
+    if normal:
+        camera_poses = dataset.get_transforms_cv2()
+        translations = np.array([T[:3, 3] for T in camera_poses])
+        average_translation = translations.mean(axis=0)
+
+        pcd_final.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
+        pcd_final.orient_normals_towards_camera_location(average_translation)
+
     return pcd_final
 
 

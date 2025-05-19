@@ -17,6 +17,7 @@ from nerf_tools.utils.colmap_tools import (
     point_cloud_saver,
     camera_poses_saver,
     camera_info_saver,
+    normal_saver,
 )
 
 args = tyro.cli(configs.AABB)
@@ -35,13 +36,19 @@ if args.dataset.type == "nerf":
     camera_index = range(0, len(oDataset.frames))
     oDataset.set_frames_index(camera_index)
 
+else:
+    print(args.dataset.dataset_path, "not implemented")
+    exit(1)
+
 pcd = get_pointcloud(
     oDataset,
     max_depth=args.pcd.max_depth,
     skip_frames=args.pcd.skip_frames,
     filter_step=args.pcd.down_sample_frames,
     voxel_size=args.pcd.down_sample_voxel_size,
+    normal = True
 )
+print(f"Point cloud size: {len(pcd.points)}")
 
 
 aabb = pcd.get_axis_aligned_bounding_box()
@@ -63,7 +70,7 @@ if args.gui:
         import threading
         o3d.visualization.webrtc_server.enable_webrtc()
         app = o3d.visualization.gui.Application.instance
-        app.initialize() 
+        app.initialize()
         window = o3d.visualization.gui.Application.instance.create_window(
             "Compute AABB", 1920, 1080
         )
@@ -85,7 +92,7 @@ if args.gui:
         import time
         ti = time.time()
         while time.time() - ti < 200:
-            app.run() 
+            app.run()
 
 aabb_array = np.array([aabb.min_bound - args.extra,
                       aabb.max_bound + args.extra])
@@ -105,6 +112,7 @@ camera_poses_saver(oDataset, os.path.join(
     args.dataset.dataset_path, "sparse/0/"))
 camera_info_saver(oDataset, os.path.join(
     args.dataset.dataset_path, "sparse/0/"))
+normal_saver(pcd, os.path.join(args.dataset.dataset_path, "sparse/0/"))
 
 if args.save:
     with open(dataset_path, "w") as f:
