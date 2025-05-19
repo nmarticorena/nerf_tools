@@ -67,3 +67,22 @@ class Mask:
     new_folder: str = ""
     masked_folder: str = ""
     inv: bool = False
+
+
+@dataclass
+class GSplatLoader:
+    path: str = ""
+    "Path to the model to load"
+    step: int = 6999
+    "Step to load"
+    list: bool = False
+    "List all the steps in the model"
+    save: bool = False
+    "Save the model to the dataset"
+    visualize: bool = True
+    "Visualize the model"
+    save_path: str = ""
+    "Path to save the mesh"
+    res: int = 4
+    "Resolution of the icosphere"
+    is_3d: bool = False
