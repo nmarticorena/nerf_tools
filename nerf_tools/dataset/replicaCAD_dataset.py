@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
 import json
-from typing import List
+from typing import List, Tuple
 import numpy as np
-import cv2 
+import cv2
 import os
 import multiprocessing as mp
 import spatialmath as sm
@@ -31,14 +31,14 @@ class ReplicaDataset:
     frames: List[None] = field(default_factory=list)
     folder: str = "test"
     n_frames: int = 0
-    frames_index: List[int] = field(default_factory=list)    
+    frames_index: List[int] = field(default_factory=list)
     gt_mesh_path : str = "test"
 
     def __init__(self, config, parent_path = "", sequence_name = "",load_gt= True, load_isdf = False, *args, **kwargs):
         """
         Config is the json inside the isdf data:
         Include info of the detph scale, fps, and camera intrinsics
-        """ 
+        """
         self.fl_x = config["camera"]["fx"]
         self.fl_y = config["camera"]["fy"]
         self.cx = config["camera"]["cx"]
@@ -48,7 +48,7 @@ class ReplicaDataset:
         self.gt_loaded = load_gt
         self.depth_scale = config["depth_scale"]
         self.integer_depth_scale = 1/self.depth_scale
-                
+
         if load_gt:
             self.gt_mesh_path = f"{parent_path}" + "/" + config["gt_sdf_dir"] + "mesh.obj"
             self.gt_sdf_path = f"{parent_path}"  + "/" + config["gt_sdf_dir"] + "/1cm/sdf.npy"
@@ -65,21 +65,21 @@ class ReplicaDataset:
         self.load_transforms()
         self.get_frames()
 
-    def get_camera(self):
-        return o3d.camera.PinholeCameraIntrinsic(self.w, 
-                                             self.h, 
-                                             self.fl_x, 
+    def get_camera(self) -> o3d.camera.PinholeCameraIntrinsic:
+        return o3d.camera.PinholeCameraIntrinsic(self.w,
+                                             self.h,
+                                             self.fl_x,
                                              self.fl_y,
-                                             self.cx, 
+                                             self.cx,
                                              self.cy)
 
-    def sample_o3d(self, idx, depth_trunc=5.0):
+    def sample_o3d(self, idx, depth_trunc=5.0) -> Tuple[o3d.geometry.RGBDImage, np.ndarray]:
         '''
         input idx: index of sample
         '''
         assert idx>=0 and idx<self.n_frames, \
             f"sample index out of range [0,{self.n_frames}]"
-        
+
         color = o3d.io.read_image(self.image_path[idx])
         depth = o3d.io.read_image(self.depth_path[idx])
         rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(
@@ -102,7 +102,7 @@ class ReplicaDataset:
         Load camera poses from file
         '''
         if orb:
-            filename = f"{self.folder}orb_traj.txt" 
+            filename = f"{self.folder}orb_traj.txt"
         else:
             filename = f"{self.folder}traj.txt"
 
@@ -115,8 +115,8 @@ class ReplicaDataset:
         if self.gt_loaded:
 
             mesh = trimesh.exchange.load.load(self.gt_mesh_path, process=False)
-        
-        
+
+
 
 
 
@@ -142,7 +142,7 @@ class ReplicaDataset:
         # self.scene_scale = torch.from_numpy(
         #     self.scene_scale_np).float().to('cuda')
         # self.inv_scene_scale = 1. / self.scene_scale
-        
+
         return
 
     def get_frames(self):
@@ -166,7 +166,7 @@ class ReplicaDataset:
 
                         frame_json["file_path"] = rgb_path
 
-                        # Need to convert from 
+                        # Need to convert from
 
                         frame_json["transform_matrix"] = frame.transform_matrix.tolist()
                         frame_json["depth_path"] = depth_path
@@ -180,7 +180,7 @@ class ReplicaDataset:
                 frame.noise_depth = cv2.imread(f"{self.folder}/results/noise_depth_{i:04d}.png", cv2.IMREAD_ANYDEPTH)
                 frame.transform_matrix = self.transforms[i,:,:]
                 self.frames.append(frame)
-    
+
     def get_transforms(self, indexs):
         return [np.array(self.transforms[i]) for i in indexs]
 
@@ -191,7 +191,7 @@ class ReplicaDataset:
         if indexs == []: # Get all the training frames
             indexs = self.frames_index
         return self.get_transforms(indexs)
-        
+
 
     def get_camera_intrinsic(self):
         return np.array([[self.fl_x, 0, self.cx],
@@ -209,10 +209,10 @@ class ReplicaDataset:
         nerf_json['w'] = self.w
 
         if self.aabb is None:
-            nerf_json['aabb'] = self.aabb        
+            nerf_json['aabb'] = self.aabb
         if self.integer_depth_scale != 0.0:
             nerf_json['integer_depth_scale'] = self.integer_depth_scale
-        
+
         nerf_json['frames'] = self.frames
         with open(filename, 'w') as f:
             json.dump(nerf_json, f, indent=4)

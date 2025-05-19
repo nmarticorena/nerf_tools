@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 import json
-from typing import List
+from typing import List, Tuple
 import numpy as np
 import cv2
 import os
@@ -58,7 +58,7 @@ class NeRFDataset:
         os.makedirs(f"{self.path}/{self.folder}", exist_ok=True)
         self.n_frames = len(self.frames)
 
-    def get_camera(self):
+    def get_camera(self) -> open3d.camera.PinholeCameraIntrinsic:
         return open3d.camera.PinholeCameraIntrinsic(
             int(self.w), int(self.h), self.fl_x, self.fl_y, self.cx, self.cy
         )
@@ -144,7 +144,7 @@ class NeRFDataset:
         pcd.transform(pose)
         return pcd
 
-    def sample_o3d(self, idx, depth_trunc=10.0):
+    def sample_o3d(self, idx, depth_trunc=10.0) -> Tuple[open3d.geometry.RGBDImage, np.ndarray]:
         """
         input idx: index of sample
         -------
