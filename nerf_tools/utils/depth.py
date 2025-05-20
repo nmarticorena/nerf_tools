@@ -4,15 +4,10 @@ import numpy as np
 from nerf_tools.dataset.nerf_dataset import NeRFDataset
 from nerf_tools.dataset.replicaCAD_dataset import ReplicaDataset
 from typing import Union, Optional
-
-import time
+from nerf_tools.utils.timing import timer
 
 TIMING = True
 
-def timed_block(enabled):
-    if enabled:
-        return time.time()
-    return None
 
 def get_camera(intrinsic, extrinsic) -> o3d.geometry.LineSet:
     camera = o3d.geometry.LimeSet.create_camera_visualization(
@@ -85,34 +80,29 @@ def get_pointcloud(
     camera = dataset.get_camera()
     for ix, _ in enumerate(dataset.frames):
         if ix % skip_frames == 0:
-            start = timed_block(TIMING)
-            rgbd, pose = dataset.sample_o3d(ix, depth_trunc=max_depth)
+            with timer(enabled=TIMING, label=f"Frame {ix}"):
+                rgbd, pose = dataset.sample_o3d(ix, depth_trunc=max_depth)
 
-            pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, camera)
+                pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, camera)
 
-            pcd.transform(pose)
+                pcd.transform(pose)
 
-            pcd_final.points = o3d.utility.Vector3dVector(
-                np.concatenate(
-                    [np.asarray(pcd_final.points), np.asarray(pcd.points)], axis=0
+                pcd_final.points = o3d.utility.Vector3dVector(
+                    np.concatenate(
+                        [np.asarray(pcd_final.points), np.asarray(pcd.points)], axis=0
+                    )
                 )
-            )
-            pcd_final.colors = o3d.utility.Vector3dVector(
-                np.concatenate(
-                    [np.asarray(pcd_final.colors), np.asarray(pcd.colors)], axis=0
+                pcd_final.colors = o3d.utility.Vector3dVector(
+                    np.concatenate(
+                        [np.asarray(pcd_final.colors), np.asarray(pcd.colors)], axis=0
+                    )
                 )
-            )
-            end = timed_block(TIMING)
-            if start is not None and end is not None:
-                print(f"Frame {ix} took {end - start} seconds")
         # downsample the point cloud
         if ix % (filter_step * skip_frames) == 0:
-            start = timed_block(TIMING)
-            pcd_final = pcd_final.voxel_down_sample(voxel_size=voxel_size)
-            end = timed_block(TIMING)
-            if start is not None and end is not None:
-                print(f"Downsample took {end - start} seconds")
-    pcd_final = pcd_final.voxel_down_sample(voxel_size=voxel_size)
+            with timer(enabled=TIMING, label=f"Downsample {ix}"):
+                pcd_final = pcd_final.voxel_down_sample(voxel_size=voxel_size)
+    with timer(enabled=TIMING, label="Final downsample"):
+        pcd_final = pcd_final.voxel_down_sample(voxel_size=voxel_size)
     # Check if point clous is larger than max_points
     if max_points is not None and len(pcd_final.points) > max_points:
         print(f"Point cloud size: {len(pcd_final.points)}")
