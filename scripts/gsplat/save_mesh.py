@@ -36,13 +36,16 @@ shn = splats["shN"]
 
 rots = quaternion_to_rotation_matrix(quat)
 
+print(f"Loading {means.shape[0]} splats with")
 mesh = create_gs_mesh(means.cpu().numpy(),
                       rots.cpu().numpy(),
                       scales.cpu().numpy(),
-                      torch.ones_like(means).cpu().numpy(),
+                      torch.zeros_like(means).cpu().numpy(),
                       res = args.res)
 
+print(rots)
 mesh.compute_vertex_normals()
+print(mesh)
 
 if args.visualize:
     o3d.visualization.draw_geometries([mesh])
