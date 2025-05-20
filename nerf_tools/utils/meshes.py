@@ -23,9 +23,8 @@ def create_gs_mesh(means:np.ndarray,
         points = np.asarray(one_gs_mesh.vertices)
         new_points = points * S[None]
         one_gs_mesh.vertices = o3d.utility.Vector3dVector(new_points)
-        # one_gs_mesh = one_gs_mesh.paint_uniform_color(col)
+        one_gs_mesh = one_gs_mesh.paint_uniform_color(col)
         one_gs_mesh = one_gs_mesh.rotate(R)
         one_gs_mesh = one_gs_mesh.translate(mean)
         scene += one_gs_mesh
-
     return scene
