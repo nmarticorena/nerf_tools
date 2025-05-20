@@ -46,7 +46,8 @@ pcd = get_pointcloud(
     skip_frames=args.pcd.skip_frames,
     filter_step=args.pcd.down_sample_frames,
     voxel_size=args.pcd.down_sample_voxel_size,
-    normal = True
+    normal = True,
+    max_points = args.pcd.max_points,
 )
 print(f"Point cloud size: {len(pcd.points)}")
 

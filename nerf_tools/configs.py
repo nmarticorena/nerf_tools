@@ -1,3 +1,4 @@
+from typing import Optional
 from dataclasses import dataclass, field
 
 
@@ -11,6 +12,8 @@ class SamplePCD:
     "Downsample voxel size"
     max_depth: float = 10.0
     "Max depth to sample"
+    max_points: Optional[int] = None
+    "Max points to sample, if None, all points are sampled"
 
 
 @dataclass

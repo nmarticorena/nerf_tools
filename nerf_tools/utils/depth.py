@@ -3,7 +3,7 @@ import numpy as np
 
 from nerf_tools.dataset.nerf_dataset import NeRFDataset
 from nerf_tools.dataset.replicaCAD_dataset import ReplicaDataset
-from typing import Union
+from typing import Union, Optional
 
 timing = True
 if timing:
@@ -75,6 +75,7 @@ def get_pointcloud(
     filter_step=5,
     voxel_size=0.05,
     normal = False,
+    max_points: Optional[int] = None,
 ) -> o3d.geometry.PointCloud:
     pcd_final = o3d.geometry.PointCloud()
     camera = dataset.get_camera()
@@ -110,6 +111,15 @@ def get_pointcloud(
                 end = time.time()
                 print(f"Downsample took {end - start} seconds")
     pcd_final = pcd_final.voxel_down_sample(voxel_size=voxel_size)
+    # Check if point clous is larger than max_points
+    if max_points is not None and len(pcd_final.points) > max_points:
+        print(f"Point cloud size: {len(pcd_final.points)}")
+        ratio = len(pcd_final.points) / max_points
+        pcd_final = pcd_final.random_down_sample(1/ratio)
+        print(f"Performing a uniform downsample with a ration of {ratio}")
+
+
+
     if normal:
         camera_poses = dataset.get_transforms_cv2()
         translations = np.array([T[:3, 3] for T in camera_poses])
