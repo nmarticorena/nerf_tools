@@ -5,10 +5,14 @@ from nerf_tools.dataset.nerf_dataset import NeRFDataset
 from nerf_tools.dataset.replicaCAD_dataset import ReplicaDataset
 from typing import Union, Optional
 
-timing = True
-if timing:
-    import time
+import time
 
+TIMING = True
+
+def timed_block(enabled):
+    if enabled:
+        return time.time()
+    return None
 
 def get_camera(intrinsic, extrinsic) -> o3d.geometry.LineSet:
     camera = o3d.geometry.LimeSet.create_camera_visualization(
@@ -79,10 +83,9 @@ def get_pointcloud(
 ) -> o3d.geometry.PointCloud:
     pcd_final = o3d.geometry.PointCloud()
     camera = dataset.get_camera()
-    for ix, frame in enumerate(dataset.frames):
+    for ix, _ in enumerate(dataset.frames):
         if ix % skip_frames == 0:
-            if timing:
-                start = time.time()
+            start = timed_block(TIMING)
             rgbd, pose = dataset.sample_o3d(ix, depth_trunc=max_depth)
 
             pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, camera)
@@ -99,16 +102,15 @@ def get_pointcloud(
                     [np.asarray(pcd_final.colors), np.asarray(pcd.colors)], axis=0
                 )
             )
-            if timing:
-                end = time.time()
+            end = timed_block(TIMING)
+            if start is not None and end is not None:
                 print(f"Frame {ix} took {end - start} seconds")
         # downsample the point cloud
         if ix % (filter_step * skip_frames) == 0:
-            if timing:
-                start = time.time()
+            start = timed_block(TIMING)
             pcd_final = pcd_final.voxel_down_sample(voxel_size=voxel_size)
-            if timing:
-                end = time.time()
+            end = timed_block(TIMING)
+            if start is not None and end is not None:
                 print(f"Downsample took {end - start} seconds")
     pcd_final = pcd_final.voxel_down_sample(voxel_size=voxel_size)
     # Check if point clous is larger than max_points
@@ -137,7 +139,7 @@ def get_tsdf(dataset: Union[NeRFDataset, ReplicaDataset], depth_trunc: float = 1
     )
 
     camera = dataset.get_camera()
-    for ix, frame in enumerate(dataset.frames):
+    for ix, _ in enumerate(dataset.frames):
         rgbd, pose = dataset.sample_o3d(ix, depth_trunc=depth_trunc)
 
         volume.integrate(rgbd, camera, np.linalg.inv(pose))
