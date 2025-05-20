@@ -25,16 +25,15 @@ def point_cloud_saver(pcd: o3d.geometry.PointCloud, path: str):
 
 def normal_saver(pcd: o3d.geometry.PointCloud, path: str):
     """
-    Save the normals of a point cloud to a txt file using the colmap standard
+    Save the normals of a point cloud to a np file
 
-    POINT3D_ID, NX, NY, NZ
+    NX, NY, NZ
     """
-    filepath = os.path.join(path, "normals.txt")
-    with open(filepath, "w") as f:
-        for i in range(len(pcd.normals)):
-            nx, ny, nz = pcd.normals[i]
-            f.write(f"{i} {nx} {ny} {nz}\n")
-        f.write("#\n")
+    filepath = os.path.join(path, "normals.npy")
+    normals = np.asarray(pcd.normals)
+    normals = normals.reshape(-1, 3)
+    normals = normals.astype(np.float32)
+    np.save(filepath, normals)
 
 def camera_info_saver(dataset: Dataset, path):
     """
