@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from dataclasses import dataclass, field
 
 
@@ -76,7 +76,7 @@ class Mask:
 class GSplatLoader:
     path: str = ""
     "Path to the model to load"
-    step: int = 6999
+    step: List[int] = field(default_factory=lambda :[6999])
     "Step to load"
     list: bool = False
     "List all the steps in the model"
@@ -84,7 +84,7 @@ class GSplatLoader:
     "Save the model to the dataset"
     visualize: bool = True
     "Visualize the model"
-    save_path: str = ""
+    save_path: str = "test"
     "Path to save the mesh"
     res: int = 4
     "Resolution of the icosphere"
