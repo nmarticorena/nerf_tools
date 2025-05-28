@@ -2,8 +2,10 @@ import open3d as o3d
 import numpy as np
 
 def create_gs_mesh(means:np.ndarray,
-                   rotations, scalings, colors, res=4, transform=None, scale=None) -> o3d.geometry.TriangleMesh:
+                   rotations, scalings, colors=None, res=4, transform=None, scale=None) -> o3d.geometry.TriangleMesh:
     scene = o3d.geometry.TriangleMesh()
+    if colors is None:
+        colors = np.ones((means.shape[0], 3))
 
     # Nerfstudio performs the transform first, then does the scaling
     if scale is not None:
