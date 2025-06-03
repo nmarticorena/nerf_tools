@@ -42,11 +42,11 @@ for step in args.step:
     mesh = create_gs_mesh(means.cpu().numpy(),
                         rots.cpu().numpy(),
                         scales.cpu().numpy(),
-                        torch.zeros_like(means).cpu().numpy(),
+                        torch.ones_like(means).cpu().numpy(),
                         res = args.res)
 
     print(rots)
-    mesh.compute_vertex_normals()
+    # mesh.compute_vertex_normals()
     print(mesh)
 
     if args.visualize:
