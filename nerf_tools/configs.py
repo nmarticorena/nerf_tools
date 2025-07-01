@@ -39,6 +39,8 @@ class AABB:
     "Visualize results with open3D"
     web: bool = False
     "to use the webrtc open3d"
+    camera_size: float = 1
+    "Size of the camera to visualize in the aabb"
 
 
 @dataclass

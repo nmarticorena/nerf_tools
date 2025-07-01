@@ -62,8 +62,8 @@ aabb = o3d.geometry.AxisAlignedBoundingBox(min_bound, max_bound)
 aabb.color = (1, 0, 0)
 
 if args.gui:
-    cameras = oDataset.draw_cameras()
-    final = [pcd, aabb, *cameras]
+    cameras = oDataset.draw_cameras(args.camera_size)
+    final = [*geom, *cameras]
     if not args.web:
         o3d.visualization.draw_geometries(final)
     else:

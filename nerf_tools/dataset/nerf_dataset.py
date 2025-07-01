@@ -63,14 +63,15 @@ class NeRFDataset:
             int(self.w), int(self.h), self.fl_x, self.fl_y, self.cx, self.cy
         )
 
-    def draw_cameras(self):
+    def draw_cameras(self, scale=0.1) -> List[o3d.geometry.LineSet]:
         intrinsic = self.get_camera()
         extrinsic = self.get_transforms_cv2()
         Lines = []
+        print(f"Drawing {len(extrinsic)} cameras, scale={scale}")
         for W_TC in extrinsic:
             Lines.append(
                 o3d.geometry.LineSet.create_camera_visualization(
-                    intrinsic, np.linalg.inv(W_TC), scale=0.1
+                    intrinsic, np.linalg.inv(W_TC), scale=scale
                 )
             )
         return Lines
