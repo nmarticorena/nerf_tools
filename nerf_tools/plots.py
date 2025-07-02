@@ -25,8 +25,10 @@ def configure_matplotlib():
 
 
 def set_one_column(hegiht=3.5):
+    configure_matplotlib()
     plt.rcParams.update({"figure.figsize": (3.5, hegiht)})
 
 
 def set_two_column(hegiht=3.5):
+    configure_matplotlib()
     plt.rcParams.update({"figure.figsize": (7, hegiht)})
