@@ -95,3 +95,8 @@ class GSplatLoader:
     res: int = 4
     "Resolution of the icosphere"
     is_3d: bool = False
+    "Is the gsplat 3D or 2D, if False, it is a 2D gsplat"
+    id_color: bool = False
+    "Use the id color for the splats, if False, use the RGB color"
+    min_opacity: float = 0.05
+    "Minimum opacity for the splats, if 0, all splats are used"

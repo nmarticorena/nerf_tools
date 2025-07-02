@@ -35,6 +35,25 @@ for step in args.step:
         scales[:, -1] = 0. # Flatten the ellipsoid to a 2D plane
     sh0 = splats["sh0"]
     shn = splats["shN"]
+    C0 = 0.28209479177387814
+
+    mask = opacities > args.min_opacity
+    means = means[mask]
+    quat = quat[mask]
+    scales = scales[mask]
+    sh0 = sh0[mask]
+    shn = shn[mask]
+
+    def SH2RGB(sh):
+        return sh * C0 + 0.5
+
+    rgb = SH2RGB(sh0)
+    # rgb = sh0
+
+    if args.id_color:
+        # Use the id color for the splats
+        rgb = torch.rand(rgb.shape, device=rgb.device).unsqueeze(1)
+        rgb = rgb.float()
 
     rots = quaternion_to_rotation_matrix(quat)
 
@@ -42,11 +61,11 @@ for step in args.step:
     mesh = create_gs_mesh(means.cpu().numpy(),
                         rots.cpu().numpy(),
                         scales.cpu().numpy(),
-                        torch.ones_like(means).cpu().numpy(),
+                        colors = rgb.squeeze().cpu().numpy(),
                         res = args.res)
 
     print(rots)
-    # mesh.compute_vertex_normals()
+    mesh.compute_vertex_normals()
     print(mesh)
 
     if args.visualize:
@@ -54,6 +73,7 @@ for step in args.step:
 
 
     if args.save:
-        save_name = os.path.join(args.save_path, f"mesh_{step}.ply")
+        save_name = os.path.join("results/ellipsoids",args.save_path, f"mesh_{step}.ply")
+        os.makedirs(os.path.dirname(save_name), exist_ok=True)
         success = o3d.io.write_triangle_mesh(save_name, mesh, print_progress=True)
 
