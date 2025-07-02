@@ -39,8 +39,12 @@ class AABB:
     "Visualize results with open3D"
     web: bool = False
     "to use the webrtc open3d"
+    add_points: int = 0
+    "Add noisy points inside the aabb"
     camera_size: float = 1
     "Size of the camera to visualize in the aabb"
+    aabb_show: bool = True
+    "Show the aabb in the visualization"
 
 
 @dataclass

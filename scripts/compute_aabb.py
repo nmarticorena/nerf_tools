@@ -57,9 +57,31 @@ aabb = pcd.get_axis_aligned_bounding_box()
 min_bound = aabb.min_bound - np.array([args.extra, args.extra, 0])
 max_bound = aabb.max_bound + np.array([args.extra, args.extra, 0])
 
-aabb = o3d.geometry.AxisAlignedBoundingBox(min_bound, max_bound)
+if args.add_points > 0:
+    # Add random points inside the aabb
+    random_points = np.random.uniform(
+        low=min_bound, high=max_bound, size=(args.add_points, 3)
+    )
+    pcd.points = o3d.utility.Vector3dVector(
+        np.concatenate((np.asarray(pcd.points), random_points), axis=0)
+    )
+    # add random normals
+    normals = np.random.rand(args.add_points, 3) * 2 - 1  # Random normals in [-1, 1]
+    normals /= np.linalg.norm(normals, axis=1, keepdims=True)  # Normalize normals
+    pcd.normals = o3d.utility.Vector3dVector(
+        np.concatenate((np.asarray(pcd.normals), normals), axis=0)
+    )
+    pcd.colors = o3d.utility.Vector3dVector(
+        np.concatenate((np.asarray(pcd.colors), np.random.rand(args.add_points, 3)), axis=0)
+    )
+    print(f"Point cloud size after adding points: {len(pcd.points)}")
 
-aabb.color = (1, 0, 0)
+if args.aabb_show:
+    aabb_geom = o3d.geometry.AxisAlignedBoundingBox(min_bound, max_bound)
+    aabb_geom.color = (1, 0, 0)
+    geom = [pcd, aabb_geom]
+else:
+    geom = [pcd]
 
 if args.gui:
     cameras = oDataset.draw_cameras(args.camera_size)
@@ -105,16 +127,19 @@ json_object = json.dumps(config, indent=4)
 
 o3d.io.write_point_cloud("test.ply", pcd)
 
+
 os.makedirs(os.path.join(args.dataset.dataset_path,
             "sparse", "0"), exist_ok=True)
 
-point_cloud_saver(pcd, os.path.join(args.dataset.dataset_path, "sparse/0/"))
-camera_poses_saver(oDataset, os.path.join(
-    args.dataset.dataset_path, "sparse/0/"))
-camera_info_saver(oDataset, os.path.join(
-    args.dataset.dataset_path, "sparse/0/"))
-normal_saver(pcd, os.path.join(args.dataset.dataset_path, "sparse/0/"))
-
 if args.save:
+
+    point_cloud_saver(pcd, os.path.join(args.dataset.dataset_path, "sparse/0/"))
+    camera_poses_saver(oDataset, os.path.join(
+        args.dataset.dataset_path, "sparse/0/"))
+    camera_info_saver(oDataset, os.path.join(
+        args.dataset.dataset_path, "sparse/0/"))
+    normal_saver(pcd, os.path.join(args.dataset.dataset_path, "sparse/0/"))
+
+
     with open(dataset_path, "w") as f:
         json.dump(config, f, indent=4)
