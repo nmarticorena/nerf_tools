@@ -45,6 +45,8 @@ class AABB:
     "Size of the camera to visualize in the aabb"
     aabb_show: bool = True
     "Show the aabb in the visualization"
+    save_pcd: bool = False
+    "Save the resulted filtered pointcloud"
 
 
 @dataclass
@@ -98,5 +100,5 @@ class GSplatLoader:
     "Is the gsplat 3D or 2D, if False, it is a 2D gsplat"
     id_color: bool = False
     "Use the id color for the splats, if False, use the RGB color"
-    min_opacity: float = 0.05
+    min_opacity: float = 0.0
     "Minimum opacity for the splats, if 0, all splats are used"
