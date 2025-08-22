@@ -83,6 +83,9 @@ if args.aabb_show:
 else:
     geom = [pcd]
 
+if args.save_pcd:
+    o3d.io.write_point_cloud("pcd.ply", pcd)
+
 if args.gui:
     cameras = oDataset.draw_cameras(args.camera_size)
     final = [*geom, *cameras]
