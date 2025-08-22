@@ -48,6 +48,7 @@ for step in args.step:
         return sh * C0 + 0.5
 
     rgb = SH2RGB(sh0)
+    rgb = rgb.clamp(0, 1)
     # rgb = sh0
 
     if args.id_color:
@@ -64,9 +65,7 @@ for step in args.step:
                         colors = rgb.squeeze().cpu().numpy(),
                         res = args.res)
 
-    print(rots)
     mesh.compute_vertex_normals()
-    print(mesh)
 
     if args.visualize:
         o3d.visualization.draw_geometries([mesh])
@@ -75,5 +74,5 @@ for step in args.step:
     if args.save:
         save_name = os.path.join("results/ellipsoids",args.save_path, f"mesh_{step}.ply")
         os.makedirs(os.path.dirname(save_name), exist_ok=True)
-        success = o3d.io.write_triangle_mesh(save_name, mesh, print_progress=True)
+        success = o3d.io.write_triangle_mesh(save_name, mesh, print_progress=False)
 
