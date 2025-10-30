@@ -1,5 +1,5 @@
-# phd_tools
-Set of differents tools and scripts using during my PhD
+# nerf_tools
+Set of differents tools and scripts to manipulate nerfs datasets
 
 
 ## Dataset tools
