@@ -1,0 +1,37 @@
+context:
+    version: 0.0.1
+package:
+    name: nerf_tools
+    version: ${{version}}
+
+source:
+    path: .
+    use_gitignore: true
+
+build:
+    noarch: python
+    script: pip install . -v
+
+
+requirements:
+    host:
+        - python
+        - pip
+        - hatchling
+        - tyro
+        - open3d
+        - numpy
+        - opencv
+    run:
+        - python
+        - tyro
+        - numpy
+        - open3d
+        - opencv
+        - spatialmath-python
+        - trimesh
+
+
+tests:
+    - script:
+        - compute-aabb --help
