@@ -47,6 +47,8 @@ class AABB:
     "Show the aabb in the visualization"
     save_pcd: bool = False
     "Save the resulted filtered pointcloud"
+    copy: str = ""
+    "Copy the aabb to another folder, if empty, it will not copy"
 
 
 @dataclass

@@ -125,6 +125,12 @@ class NeRFDataset:
             elif frame["file_path"] == rgb_filename:
                 idx = i
                 break
+            elif frame["file_path"].split("/")[-1] == rgb_filename.replace(".png",""):
+                idx = i
+                break
+            elif frame["file_path"] == rgb_filename.replace(".png",""):
+                idx = i
+                break
         assert idx != -1, f"rgb_filename {rgb_filename} not found"
         return self.sample_metric_depth(idx)
 

@@ -49,10 +49,8 @@ for step in args.step:
 
     rgb = SH2RGB(sh0)
     rgb = rgb.clamp(0, 1)
-    # rgb = sh0
 
     if args.id_color:
-        # Use the id color for the splats
         rgb = torch.rand(rgb.shape, device=rgb.device).unsqueeze(1)
         rgb = rgb.float()
 

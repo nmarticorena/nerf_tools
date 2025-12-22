@@ -10,6 +10,7 @@ import numpy as np
 import os
 import json
 import tyro
+import shutil
 
 from nerf_tools.utils.depth import get_pointcloud
 import nerf_tools.configs as configs
@@ -125,23 +126,26 @@ aabb_array = np.array([aabb.min_bound - args.extra,
 config["aabb"] = aabb_array.tolist()
 
 json_object = json.dumps(config, indent=4)
-# R = sm.SE3.Rx(np.pi/2) * sm.SE3.Ry(np.pi/2)
-# pcd = pcd.transform(R.A)
-
-o3d.io.write_point_cloud("test.ply", pcd)
-
-
-os.makedirs(os.path.join(args.dataset.dataset_path,
-            "sparse", "0"), exist_ok=True)
-
 if args.save:
+    if args.copy:
+        # Copy the aabb to another folder
+        copy_path = args.copy
+        os.makedirs(copy_path, exist_ok=True)
+        shutil.copytree(args.dataset.dataset_path, copy_path, dirs_exist_ok=True)
+        path = copy_path
+        dataset_path = os.path.join(copy_path, "transforms.json")
+    else:
+        path = args.dataset.dataset_path
 
-    point_cloud_saver(pcd, os.path.join(args.dataset.dataset_path, "sparse/0/"))
+    os.makedirs(os.path.join(path,
+            "sparse", "0"), exist_ok=True)
+    o3d.io.write_point_cloud(os.path.join(path,"pcd.ply"), pcd)
+    point_cloud_saver(pcd, os.path.join(path, "sparse/0/"))
     camera_poses_saver(oDataset, os.path.join(
-        args.dataset.dataset_path, "sparse/0/"))
+        path, "sparse/0/"))
     camera_info_saver(oDataset, os.path.join(
-        args.dataset.dataset_path, "sparse/0/"))
-    normal_saver(pcd, os.path.join(args.dataset.dataset_path, "sparse/0/"))
+        path, "sparse/0/"))
+    normal_saver(pcd, os.path.join(path, "sparse/0/"))
 
 
     with open(dataset_path, "w") as f:
