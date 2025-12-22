@@ -10,7 +10,6 @@ import numpy as np
 import os
 import json
 import tyro
-import shutil
 
 from nerf_tools.utils.depth import get_pointcloud
 import nerf_tools.configs as configs
