@@ -6,7 +6,7 @@ from nerf_tools.dataset.replicaCAD_dataset import ReplicaDataset
 from typing import Union, Optional
 from nerf_tools.utils.timing import timer
 
-TIMING = True
+TIMING = False
 
 
 def get_camera(intrinsic, extrinsic) -> o3d.geometry.LineSet:
